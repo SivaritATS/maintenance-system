@@ -20,7 +20,7 @@ export default function TechnicianPage() {
   const myJobs = tickets.filter(t => t.assigneeId === currentUser.id && t.status !== 'completed' && t.status !== 'cancellation_requested');
   const myCompleted = tickets.filter(t => t.assigneeId === currentUser.id && t.status === 'completed');
   const myCancelRequests = tickets.filter(t => t.assigneeId === currentUser.id && t.status === 'cancellation_requested');
-  
+
   const recommended = availableTickets.filter(t => t.category === currentUser.specialty || currentUser.specialty === 'General');
   const others = availableTickets.filter(t => t.category !== currentUser.specialty && currentUser.specialty !== 'General');
 
@@ -60,7 +60,7 @@ export default function TechnicianPage() {
         return { image: imageInput.files[0] };
       }
     });
-  
+
     if (formValues) {
       updateTicketStatus(ticket.id, 'completed');
       updateUserScore(currentUser.id, 0.5);
@@ -105,21 +105,45 @@ export default function TechnicianPage() {
       <div className="container animate-in">
         {/* Stats */}
         <div className="stats-row">
-          <div className="stat-card">
+          <div
+            className="stat-card"
+            onClick={() => setTechTab('available')}
+            style={{
+              cursor: 'pointer',
+              borderColor: techTab === 'available' ? 'var(--info-500)' : '',
+              borderWidth: techTab === 'available' ? '2px' : ''
+            }}
+          >
             <div className="stat-icon blue">📋</div>
             <div>
               <div className="stat-value">{availableTickets.length}</div>
               <div className="stat-label">Available</div>
             </div>
           </div>
-          <div className="stat-card">
+          <div
+            className="stat-card"
+            onClick={() => setTechTab('my-jobs')}
+            style={{
+              cursor: 'pointer',
+              borderColor: techTab === 'my-jobs' ? 'var(--primary-500)' : '',
+              borderWidth: techTab === 'my-jobs' ? '2px' : ''
+            }}
+          >
             <div className="stat-icon purple">🔧</div>
             <div>
               <div className="stat-value">{myJobs.length}</div>
               <div className="stat-label">Active Jobs</div>
             </div>
           </div>
-          <div className="stat-card">
+          <div
+            className="stat-card"
+            onClick={() => setTechTab('completed')}
+            style={{
+              cursor: 'pointer',
+              borderColor: techTab === 'completed' ? 'var(--success-500)' : '',
+              borderWidth: techTab === 'completed' ? '2px' : ''
+            }}
+          >
             <div className="stat-icon green">✅</div>
             <div>
               <div className="stat-value">{myCompleted.length}</div>
@@ -142,6 +166,9 @@ export default function TechnicianPage() {
           </div>
           <div className={`tab ${techTab === 'my-jobs' ? 'active' : ''}`} onClick={() => setTechTab('my-jobs')}>
             My Jobs ({myJobs.length})
+          </div>
+          <div className={`tab ${techTab === 'completed' ? 'active' : ''}`} onClick={() => setTechTab('completed')}>
+            Completed ({myCompleted.length})
           </div>
         </div>
 
@@ -174,8 +201,8 @@ export default function TechnicianPage() {
                       <span>{ticket.category}</span>
                     </div>
                     <div className="ticket-desc">{ticket.description}</div>
-                    <button 
-                      onClick={() => updateTicketStatus(ticket.id, 'approved', currentUser.id)} 
+                    <button
+                      onClick={() => updateTicketStatus(ticket.id, 'approved', currentUser.id)}
                       className="btn btn-primary btn-full"
                     >
                       Take Job
@@ -205,8 +232,8 @@ export default function TechnicianPage() {
                         <span>{ticket.category}</span>
                       </div>
                       <div className="ticket-desc">{ticket.description}</div>
-                      <button 
-                        onClick={() => updateTicketStatus(ticket.id, 'approved', currentUser.id)} 
+                      <button
+                        onClick={() => updateTicketStatus(ticket.id, 'approved', currentUser.id)}
                         className="btn btn-secondary btn-full"
                       >
                         Take Job (Cross-Role)
@@ -224,8 +251,9 @@ export default function TechnicianPage() {
           <div>
             <div className="section-header">
               <h2 className="section-title">Tasks in Progress</h2>
+              <span className="section-subtitle">{myJobs.length} active</span>
             </div>
-            
+
             {myJobs.length === 0 && myCancelRequests.length === 0 ? (
               <div className="card">
                 <div className="empty-state">
@@ -249,14 +277,14 @@ export default function TechnicianPage() {
                       </div>
                       <div className="ticket-desc">{ticket.description}</div>
                       <div className="ticket-actions" style={{ flexDirection: 'column' }}>
-                        <button 
-                          onClick={() => handleCompleteJob(ticket)} 
+                        <button
+                          onClick={() => handleCompleteJob(ticket)}
                           className="btn btn-success btn-full"
                         >
                           ✓ Mark as Completed
                         </button>
-                        <button 
-                          onClick={() => handleCancelJob(ticket)} 
+                        <button
+                          onClick={() => handleCancelJob(ticket)}
                           className="btn btn-ghost btn-full"
                           style={{ color: 'var(--danger-500)', fontSize: '0.8rem', marginTop: '0.25rem' }}
                         >
@@ -292,6 +320,43 @@ export default function TechnicianPage() {
                   </>
                 )}
               </>
+            )}
+          </div>
+        )}
+
+        {/* Completed Tab */}
+        {techTab === 'completed' && (
+          <div>
+            <div className="section-header">
+              <h2 className="section-title">Completed Jobs</h2>
+              <span className="section-subtitle">{myCompleted.length} total</span>
+            </div>
+            {myCompleted.length === 0 ? (
+              <div className="card">
+                <div className="empty-state">
+                  <div className="empty-state-icon">✅</div>
+                  <div className="empty-state-title">No completed jobs yet</div>
+                  <div className="empty-state-desc">Complete your first job to see it here.</div>
+                </div>
+              </div>
+            ) : (
+              <div className="ticket-grid">
+                {myCompleted.map(ticket => (
+                  <div key={ticket.id} className={`ticket-card ${getCategoryClass(ticket.category)}`} style={{ opacity: 0.9 }}>
+                    <div className="ticket-header">
+                      <span className="ticket-id">Ticket #{ticket.id}</span>
+                      <span className="status-badge status-completed">Completed</span>
+                    </div>
+                    <div className="ticket-title">{ticket.title}</div>
+                    <div className="ticket-meta">
+                      <span>{ticket.category}</span>
+                      <span className="dot"></span>
+                      <span>{ticket.createdAt}</span>
+                    </div>
+                    <div className="ticket-desc">{ticket.description}</div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}

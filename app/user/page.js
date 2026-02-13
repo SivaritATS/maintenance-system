@@ -9,6 +9,7 @@ export default function UserPage() {
   const { currentUser, tickets, createTicket } = useMaintenance();
   const router = useRouter();
   const [newTicket, setNewTicket] = useState({ title: '', description: '', category: 'General' });
+  const [activeStatus, setActiveStatus] = useState('all');
 
   useEffect(() => {
     if (!currentUser) router.push('/');
@@ -20,6 +21,20 @@ export default function UserPage() {
   const pendingCount = myTickets.filter(t => t.status === 'pending').length;
   const approvedCount = myTickets.filter(t => t.status === 'approved').length;
   const completedCount = myTickets.filter(t => t.status === 'completed').length;
+
+  const filteredTickets = myTickets.filter(t => {
+    if (activeStatus === 'all') return true;
+    if (activeStatus === 'in_progress') return t.status === 'approved';
+    return t.status === activeStatus;
+  });
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'approved': return 'In Progress';
+      case 'cancellation_requested': return 'Cancellation Requested';
+      default: return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -38,28 +53,60 @@ export default function UserPage() {
       <div className="container animate-in">
         {/* Stats */}
         <div className="stats-row">
-          <div className="stat-card">
+          <div 
+            className="stat-card" 
+            onClick={() => setActiveStatus('all')}
+            style={{ 
+              cursor: 'pointer',
+              borderColor: activeStatus === 'all' ? 'var(--primary-500)' : '',
+              borderWidth: activeStatus === 'all' ? '2px' : ''
+            }}
+          >
             <div className="stat-icon purple">📝</div>
             <div>
               <div className="stat-value">{myTickets.length}</div>
               <div className="stat-label">Total Reports</div>
             </div>
           </div>
-          <div className="stat-card">
+          <div 
+            className="stat-card"
+            onClick={() => setActiveStatus('pending')}
+            style={{ 
+              cursor: 'pointer',
+              borderColor: activeStatus === 'pending' ? 'var(--warning-500)' : '',
+              borderWidth: activeStatus === 'pending' ? '2px' : ''
+            }}
+          >
             <div className="stat-icon amber">⏳</div>
             <div>
               <div className="stat-value">{pendingCount}</div>
               <div className="stat-label">Pending</div>
             </div>
           </div>
-          <div className="stat-card">
+          <div 
+            className="stat-card"
+            onClick={() => setActiveStatus('in_progress')}
+            style={{ 
+              cursor: 'pointer',
+              borderColor: activeStatus === 'in_progress' ? 'var(--info-500)' : '',
+              borderWidth: activeStatus === 'in_progress' ? '2px' : ''
+            }}
+          >
             <div className="stat-icon blue">🔧</div>
             <div>
               <div className="stat-value">{approvedCount}</div>
               <div className="stat-label">In Progress</div>
             </div>
           </div>
-          <div className="stat-card">
+          <div 
+            className="stat-card"
+            onClick={() => setActiveStatus('completed')}
+            style={{ 
+              cursor: 'pointer',
+              borderColor: activeStatus === 'completed' ? 'var(--success-500)' : '',
+              borderWidth: activeStatus === 'completed' ? '2px' : ''
+            }}
+          >
             <div className="stat-icon green">✅</div>
             <div>
               <div className="stat-value">{completedCount}</div>
@@ -118,24 +165,24 @@ export default function UserPage() {
               <h2 className="section-title">My Reports</h2>
               <span className="section-subtitle">{myTickets.length} total</span>
             </div>
-            {myTickets.length === 0 ? (
+            {filteredTickets.length === 0 ? (
               <div className="card">
                 <div className="empty-state">
                   <div className="empty-state-icon">📭</div>
-                  <div className="empty-state-title">No reports yet</div>
-                  <div className="empty-state-desc">Submit your first maintenance report using the form.</div>
+                  <div className="empty-state-title">No reports found</div>
+                  <div className="empty-state-desc">Try changing the filter or submit a new report.</div>
                 </div>
               </div>
             ) : (
               <div className="ticket-grid">
-                {myTickets.map(ticket => (
+                {filteredTickets.map(ticket => (
                   <div 
                     key={ticket.id} 
                     className={`ticket-card ${getCategoryClass(ticket.category)}`}
                   >
                     <div className="ticket-header">
                       <span className="ticket-id">Ticket #{ticket.id}</span>
-                      <span className={`status-badge status-${ticket.status.replace(' ', '-')}`}>{ticket.status}</span>
+                      <span className={`status-badge status-${ticket.status.replace(' ', '-')}`}>{getStatusLabel(ticket.status)}</span>
                     </div>
                     <div className="ticket-title">{ticket.title}</div>
                     <div className="ticket-meta">
