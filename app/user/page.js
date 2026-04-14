@@ -214,9 +214,9 @@ export default function UserPage() {
           <div>
             <div className="section-header">
               <h2 className="section-title">My Reports</h2>
-              <span className="section-subtitle">{myTickets.length} total</span>
+              <span className="section-subtitle">{data.length} total</span>
             </div>
-            {filteredTickets.length === 0 ? (
+            {data.length === 0 ? (
               <div className="card">
                 <div className="empty-state">
                   <div className="empty-state-icon">📭</div>
@@ -226,22 +226,22 @@ export default function UserPage() {
               </div>
             ) : (
               <div className="ticket-grid">
-                {filteredTickets.map(ticket => (
+                {data.map(ticket => (
                   <div 
                     key={ticket.id} 
                     className={`ticket-card ${getCategoryClass(ticket.category)}`}
                   >
                     <div className="ticket-header">
-                      <span className="ticket-id">Ticket #{ticket.id}</span>
-                      <span className={`status-badge status-${ticket.status.replace(' ', '-')}`}>{getStatusLabel(ticket.status)}</span>
+                      <span className="ticket-id">Ticket #{ticket.fix_id}</span>
+                      <span className={`status-badge status-${ticket.fix_status.replace(' ', '-')}`}>{getStatusLabel(ticket.fix_status)}</span>
                     </div>
-                    <div className="ticket-title">{ticket.title}</div>
+                    <div className="ticket-title">{ticket.fix_name}</div>
                     <div className="ticket-meta">
                       <span>{ticket.category}</span>
                       <span className="dot"></span>
-                      <span>{ticket.createdAt}</span>
+                      <span>{ticket.report_date}</span>
                     </div>
-                    <div className="ticket-desc">{ticket.description}</div>
+                    <div className="ticket-desc">{ticket.fix_detail}</div>
                   </div>
                 ))}
               </div>
