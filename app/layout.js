@@ -27,7 +27,7 @@ export default function RootLayout({ children }) {
         <MaintenanceProvider>
           {children}
           {/* Debug Role Switcher - Always visible for now as requested */}
-          <RoleSwitcher />
+          {/* <RoleSwitcher /> */}
         </MaintenanceProvider>
       </body>
     </html>

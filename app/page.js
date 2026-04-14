@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMaintenance } from "./context/MaintenanceContext";
 import Swal from "sweetalert2";
 import axios from "axios";
+import RoleSwitcher from "./components/RoleSwitcher_login";
 
 export default function LoginPage() {
   const { login, currentUser } = useMaintenance();
@@ -31,6 +32,15 @@ export default function LoginPage() {
     e.preventDefault();
     // const success = login(loginId, loginPwd);
     const mode = localStorage.getItem("role");
+    if (!mode) {
+      setError("Please select a role before logging in.");
+      Swal.fire({
+        icon: "warning",
+        title: "Role Not Selected",
+        text: "Please select a role before logging in.",
+      });
+      return;
+    }
     if (mode === "admin" || mode === "tech") {
       try {
         const response = await axios.post(
@@ -53,10 +63,12 @@ export default function LoginPage() {
             });
             if (role === "technician") {
               localStorage.setItem("uid", data.operator_id);
+              localStorage.setItem("uname", data.fnames);
               router.push("/technician");
             }
             if (role === "admin") {
               localStorage.setItem("uid", data.operator_id);
+              localStorage.setItem("uname", data.fnames);
               router.push("/admin");
             }
           } else {
@@ -96,6 +108,8 @@ export default function LoginPage() {
               showConfirmButton: false,
             });
             localStorage.setItem("uid", data.operator_id);
+            localStorage.setItem("uname", data.fnames);
+
             router.push("/user");
           } else {
             setError("Invalid ID or Password");
@@ -171,6 +185,7 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+      <RoleSwitcher />
     </div>
   );
 }
