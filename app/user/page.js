@@ -4,19 +4,33 @@ import { useMaintenance } from '../context/MaintenanceContext';
 import { useRouter } from 'next/navigation';
 import Header from '../components/Header';
 import { CATEGORIES } from '../mockData';
+import axios from 'axios';
+import { get } from 'http';
 
 export default function UserPage() {
   const { currentUser, tickets, createTicket } = useMaintenance();
   const router = useRouter();
   const [newTicket, setNewTicket] = useState({ title: '', description: '', category: 'General' });
   const [activeStatus, setActiveStatus] = useState('all');
-
+  const [data, setData] = useState([]);
+ 
   useEffect(() => {
     if (!currentUser) router.push('/');
+    const getdata = async () => {
+      try {
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_URL}/api/fixs/studentreport`,{
+            id: currentUser.id
+        });
+        setData(response.data);
+        
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    getdata();
   }, [currentUser, router]);
 
   if (!currentUser) return null;
-
   const myTickets = tickets.filter(t => t.reporterId === currentUser.id);
   const pendingCount = myTickets.filter(t => t.status === 'pending').length;
   const approvedCount = myTickets.filter(t => t.status === 'approved').length;
