@@ -32,9 +32,11 @@ export default function UserPage() {
 
   if (!currentUser) return null;
   const myTickets = tickets.filter(t => t.reporterId === currentUser.id);
-  const pendingCount = myTickets.filter(t => t.status === 'pending').length;
-  const approvedCount = myTickets.filter(t => t.status === 'approved').length;
-  const completedCount = myTickets.filter(t => t.status === 'completed').length;
+  const pendingCount = data.filter(t => t.fix_status === 'pending').length;
+  const approvedCount = data.filter(t => t.fix_status === 'approved').length;
+  const completedCount = data.filter(t => t.fix_status === 'completed').length;
+
+  
 
   const filteredTickets = myTickets.filter(t => {
     if (activeStatus === 'all') return true;
@@ -155,6 +157,16 @@ export default function UserPage() {
                 >
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Location</label>
+                <input 
+                  className="form-input"
+                  value={newTicket.location}
+                  onChange={e => setNewTicket({...newTicket, title: e.target.value})}
+                  placeholder="e.g. 11-101 Auditorium"
+                  required
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">Description</label>
