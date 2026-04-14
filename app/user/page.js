@@ -10,7 +10,12 @@ import { get } from 'http';
 export default function UserPage() {
   const { currentUser, tickets, createTicket } = useMaintenance();
   const router = useRouter();
-  const [newTicket, setNewTicket] = useState({ title: '', description: '', category: 'General' });
+  const [newTicket, setNewTicket] = useState({
+  title: '',
+  description: '',
+  category: 'General',
+  location: ''   
+});
   const [activeStatus, setActiveStatus] = useState('all');
   const [data, setData] = useState([]);
  
@@ -52,10 +57,30 @@ export default function UserPage() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    createTicket(newTicket);
-    setNewTicket({ title: '', description: '', category: 'General' });
+    const stringDate = new Date()
+  .toISOString()
+  .slice(0, 19)
+  .replace('T', ' ');
+    const response=await axios.post(`${process.env.NEXT_PUBLIC_URL}/api/addfixs`,{
+      "fixs_name":newTicket.title,
+      "fixs_detail":newTicket.description,
+      "fixs_location":newTicket.location,
+      "fixs_status":"pending",
+      "reporter":currentUser.id,
+      "operator":null,
+      "report_date": stringDate,
+      "category":newTicket.category,
+      "finish_date":null,
+      "credit":null,
+
+    })
+    if(response.status === 200){
+      createTicket(newTicket);
+    } else {
+      alert("Failed to submit report. Please try again.");
+    }
   };
 
   const getCategoryClass = (cat) => {
@@ -163,7 +188,7 @@ export default function UserPage() {
                 <input 
                   className="form-input"
                   value={newTicket.location}
-                  onChange={e => setNewTicket({...newTicket, title: e.target.value})}
+                  onChange={e => setNewTicket({...newTicket, location: e.target.value})}
                   placeholder="e.g. 11-101 Auditorium"
                   required
                 />
