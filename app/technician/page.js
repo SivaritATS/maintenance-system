@@ -1,37 +1,139 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { useMaintenance } from '../context/MaintenanceContext';
-import { useRouter } from 'next/navigation';
-import Header from '../components/Header';
-import Swal from 'sweetalert2';
+"use client";
+import { useState, useEffect, Suspense } from "react";
+import { useMaintenance } from "../context/MaintenanceContext";
+import { useRouter, useSearchParams } from "next/navigation";
+import Header from "../components/Header";
+import Swal from "sweetalert2";
+import { decrypt } from "@/encrypt";
+import axios from "axios";
 
-export default function TechnicianPage() {
-  const { currentUser, tickets, updateTicketStatus, updateUserScore } = useMaintenance();
+function TechnicianPage() {
+  const { currentUser, tickets, updateTicketStatus, updateUserScore } =
+    useMaintenance();
   const router = useRouter();
-  const [techTab, setTechTab] = useState('available');
+  const [techTab, setTechTab] = useState("available");
+  const [decryptuser, setDecryptUser] = useState(null);
+  const searchParams = useSearchParams();
+  const [fixdata, setFixData] = useState([]);
+  const [operatorinfo, setOperatorInfo] = useState([]);
 
   useEffect(() => {
-    if (!currentUser) router.push('/');
-  }, [currentUser, router]);
+    const encryptedId = searchParams.get("id");
+    if (!encryptedId) {
+      router.push("/");
+      return;
+    }
+    const loginId = encryptedId
+      ? decrypt(decodeURIComponent(encryptedId))
+      : null;
+    setDecryptUser(loginId);
+  }, [searchParams]);
 
-  if (!currentUser) return null;
+  useEffect(() => {
+    if (!decryptuser) return;
 
-  const availableTickets = tickets.filter(t => t.status === 'approved' && !t.assigneeId);
-  const myJobs = tickets.filter(t => t.assigneeId === currentUser.id && t.status !== 'completed' && t.status !== 'cancellation_requested');
-  const myCompleted = tickets.filter(t => t.assigneeId === currentUser.id && t.status === 'completed');
-  const myCancelRequests = tickets.filter(t => t.assigneeId === currentUser.id && t.status === 'cancellation_requested');
+    const getfixs = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_URL}/api/getfixs/fixsall`,
+        );
+        setFixData(response.data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
 
-  const recommended = availableTickets.filter(t => t.category === currentUser.specialty || currentUser.specialty === 'General');
-  const others = availableTickets.filter(t => t.category !== currentUser.specialty && currentUser.specialty !== 'General');
+    const validateUser = async () => {
+      try {
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/api/getoperator`,
+          {
+            id: decryptuser,
+          },
+        );
+        setOperatorInfo(response.data[0]);
+        getfixs();
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Unauthorized",
+          text: "Unauthorized to access this page.",
+        });
+        router.push("/");
+        console.log(error);
+      }
+    };
+
+    validateUser();
+  }, [decryptuser]);
+
+  const handletakejob = async (ticket) => {
+    try {
+      const ticketid = ticket.fix_id;
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_URL}/api/updatestatus/updatesfixoperator`,
+        {
+          id: ticketid,
+          status: "inprogress",
+          operator: decryptuser,
+        },
+      );
+      if (response.status === 200) {
+        Swal.fire({
+          icon: "success",
+          title: "Job Taken",
+          text: `You have taken Ticket #${ticket.fix_id}. Check "My Jobs" tab to view details.`,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        setTimeout(() => {
+          router.refresh();
+        }, 2000);
+      }
+    } catch (error) {
+      console.log(error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to take the job. Please try again.",
+      });
+    }
+  };
+
+  const availableTickets = fixdata.filter((t) => t.fix_status === "approved");
+  const myJobs = fixdata.filter(
+    (t) => t.operator === Number(decryptuser) && t.fix_status === "inprogress",
+  );
+  const myCompleted = fixdata.filter(
+    (t) => t.operator === Number(decryptuser) && t.fix_status === "completed",
+  );
+  const myCancelRequests = fixdata.filter(
+    (t) =>
+      t.operator === Number(decryptuser) &&
+      t.fix_status === "cancellation_requested",
+  );
+
+  const recommended = fixdata.filter(
+    (t) =>
+      (t.fix_status === "approved" && t.category === operatorinfo.category) ||
+      operatorinfo.category === "General",
+  );
+
+  const others = fixdata.filter(
+    (t) =>
+      t.fix_status === "approved" &&
+      t.category !== operatorinfo.category &&
+      operatorinfo.category !== "General",
+  );
 
   const getCategoryClass = (cat) => {
-    if (cat.includes('Public')) return 'cat-Public';
+    if (cat.includes("Public")) return "cat-Public";
     return `cat-${cat}`;
   };
 
   const handleCompleteJob = async (ticket) => {
     const { value: formValues } = await Swal.fire({
-      title: '✅ Complete Job',
+      title: "✅ Complete Job",
       html: `
         <div style="text-align: left; font-size: 0.9rem;">
           <div style="margin-bottom: 1.25rem; padding: 1rem; background: #f3f4f6; border-radius: 12px;">
@@ -48,54 +150,68 @@ export default function TechnicianPage() {
       `,
       focusConfirm: false,
       showCancelButton: true,
-      confirmButtonText: 'Submit & Complete',
-      confirmButtonColor: '#10b981',
-      cancelButtonText: 'Cancel',
+      confirmButtonText: "Submit & Complete",
+      confirmButtonColor: "#10b981",
+      cancelButtonText: "Cancel",
       preConfirm: () => {
-        const imageInput = document.getElementById('swal-input-image');
+        const imageInput = document.getElementById("swal-input-image");
         if (!imageInput.files || imageInput.files.length === 0) {
-          Swal.showValidationMessage('Please upload a photo of the completed work');
+          Swal.showValidationMessage(
+            "Please upload a photo of the completed work",
+          );
           return false;
         }
         return { image: imageInput.files[0] };
-      }
+      },
     });
 
     if (formValues) {
-      updateTicketStatus(ticket.id, 'completed');
+      updateTicketStatus(ticket.id, "completed");
       updateUserScore(currentUser.id, 0.5);
       Swal.fire({
-        icon: 'success',
-        title: 'Job Completed! 🎉',
-        text: '+0.5 Score earned!',
+        icon: "success",
+        title: "Job Completed! 🎉",
+        text: "+0.5 Score earned!",
         timer: 2000,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
     }
   };
 
   const handleCancelJob = async (ticket) => {
     const { value: reason } = await Swal.fire({
-      title: '⚠️ Request Cancellation',
-      input: 'textarea',
-      inputLabel: 'Reason for cancellation',
-      inputPlaceholder: 'Why are you cancelling this job?',
-      inputAttributes: { 'aria-label': 'Type your reason here' },
+      title: "⚠️ Request Cancellation",
+      input: "textarea",
+      inputLabel: "Reason for cancellation",
+      inputPlaceholder: "Why are you cancelling this  job?",
+      inputAttributes: { "aria-label": "Type your reason here" },
       showCancelButton: true,
-      confirmButtonColor: '#ef4444',
-      confirmButtonText: 'Submit Request',
-      cancelButtonText: 'Go Back'
+      confirmButtonColor: "#ef4444",
+      confirmButtonText: "Submit Request",
+      cancelButtonText: "Go Back",
     });
 
     if (reason) {
-      updateTicketStatus(ticket.id, 'cancellation_requested', undefined, reason);
-      Swal.fire({
-        icon: 'info',
-        title: 'Request Sent',
-        text: 'Cancellation request sent to admin for review.',
-        timer: 2000,
-        showConfirmButton: false
-      });
+      try {
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/api/jobcancle`,
+          {
+            id: Number(ticket.fix_id),
+            detail: reason,
+          },
+        );
+        if (response.status === 200) {
+          Swal.fire({
+            icon: "info",
+            title: "Request Sent",
+            text: "Cancellation request sent to admin for review.",
+            timer: 2000,
+            showConfirmButton: false,
+          });
+        }
+      } catch (error) {
+        console.log(error);
+      }
     }
   };
 
@@ -103,15 +219,14 @@ export default function TechnicianPage() {
     <>
       <Header />
       <div className="container animate-in">
-        {/* Stats */}
         <div className="stats-row">
           <div
             className="stat-card"
-            onClick={() => setTechTab('available')}
+            onClick={() => setTechTab("available")}
             style={{
-              cursor: 'pointer',
-              borderColor: techTab === 'available' ? 'var(--info-500)' : '',
-              borderWidth: techTab === 'available' ? '2px' : ''
+              cursor: "pointer",
+              borderColor: techTab === "available" ? "var(--info-500)" : "",
+              borderWidth: techTab === "available" ? "2px" : "",
             }}
           >
             <div className="stat-icon blue">📋</div>
@@ -122,11 +237,11 @@ export default function TechnicianPage() {
           </div>
           <div
             className="stat-card"
-            onClick={() => setTechTab('my-jobs')}
+            onClick={() => setTechTab("my-jobs")}
             style={{
-              cursor: 'pointer',
-              borderColor: techTab === 'my-jobs' ? 'var(--primary-500)' : '',
-              borderWidth: techTab === 'my-jobs' ? '2px' : ''
+              cursor: "pointer",
+              borderColor: techTab === "my-jobs" ? "var(--primary-500)" : "",
+              borderWidth: techTab === "my-jobs" ? "2px" : "",
             }}
           >
             <div className="stat-icon purple">🔧</div>
@@ -137,11 +252,11 @@ export default function TechnicianPage() {
           </div>
           <div
             className="stat-card"
-            onClick={() => setTechTab('completed')}
+            onClick={() => setTechTab("completed")}
             style={{
-              cursor: 'pointer',
-              borderColor: techTab === 'completed' ? 'var(--success-500)' : '',
-              borderWidth: techTab === 'completed' ? '2px' : ''
+              cursor: "pointer",
+              borderColor: techTab === "completed" ? "var(--success-500)" : "",
+              borderWidth: techTab === "completed" ? "2px" : "",
             }}
           >
             <div className="stat-icon green">✅</div>
@@ -153,56 +268,70 @@ export default function TechnicianPage() {
           <div className="stat-card">
             <div className="stat-icon amber">★</div>
             <div>
-              <div className="stat-value">{currentUser.score ?? 5}</div>
+              <div className="stat-value">{5}</div>
               <div className="stat-label">Score</div>
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="tabs">
-          <div className={`tab ${techTab === 'available' ? 'active' : ''}`} onClick={() => setTechTab('available')}>
+          <div
+            className={`tab ${techTab === "available" ? "active" : ""}`}
+            onClick={() => setTechTab("available")}
+          >
             Available ({availableTickets.length})
           </div>
-          <div className={`tab ${techTab === 'my-jobs' ? 'active' : ''}`} onClick={() => setTechTab('my-jobs')}>
+          <div
+            className={`tab ${techTab === "my-jobs" ? "active" : ""}`}
+            onClick={() => setTechTab("my-jobs")}
+          >
             My Jobs ({myJobs.length})
           </div>
-          <div className={`tab ${techTab === 'completed' ? 'active' : ''}`} onClick={() => setTechTab('completed')}>
+          <div
+            className={`tab ${techTab === "completed" ? "active" : ""}`}
+            onClick={() => setTechTab("completed")}
+          >
             Completed ({myCompleted.length})
           </div>
         </div>
 
-        {/* Available Tab */}
-        {techTab === 'available' && (
+        {techTab === "available" && (
           <div>
-            {/* Recommended */}
             <div className="section-header">
               <h2 className="section-title">Recommended for You</h2>
-              <span className="section-subtitle">{currentUser.specialty}</span>
             </div>
             {recommended.length === 0 ? (
-              <div className="card" style={{ marginBottom: '2rem' }}>
+              <div className="card" style={{ marginBottom: "2rem" }}>
                 <div className="empty-state">
                   <div className="empty-state-icon">🔍</div>
-                  <div className="empty-state-title">No tasks for your specialty</div>
-                  <div className="empty-state-desc">Check "Other Tasks" below for available work.</div>
+                  <div className="empty-state-title">
+                    No tasks for your specialty
+                  </div>
+                  <div className="empty-state-desc">
+                    Check "Other Tasks" below for available work.
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="ticket-grid" style={{ marginBottom: '2rem' }}>
-                {recommended.map(ticket => (
-                  <div key={ticket.id} className={`ticket-card ${getCategoryClass(ticket.category)}`}>
+              <div className="ticket-grid" style={{ marginBottom: "2rem" }}>
+                {recommended.map((ticket) => (
+                  <div
+                    key={ticket.fix_id}
+                    className={`ticket-card ${getCategoryClass(ticket.category)}`}
+                  >
                     <div className="ticket-header">
-                      <span className="ticket-id">Ticket #{ticket.id}</span>
-                      <span className="status-badge status-approved">Available</span>
+                      <span className="ticket-id">Ticket #{ticket.fix_id}</span>
+                      <span className="status-badge status-approved">
+                        Available
+                      </span>
                     </div>
-                    <div className="ticket-title">{ticket.title}</div>
+                    <div className="ticket-title">{ticket.fix_name}</div>
                     <div className="ticket-meta">
                       <span>{ticket.category}</span>
                     </div>
-                    <div className="ticket-desc">{ticket.description}</div>
+                    <div className="ticket-desc">{ticket.fix_detail}</div>
                     <button
-                      onClick={() => updateTicketStatus(ticket.id, 'approved', currentUser.id)}
+                      onClick={() => handletakejob(ticket)}
                       className="btn btn-primary btn-full"
                     >
                       Take Job
@@ -212,28 +341,37 @@ export default function TechnicianPage() {
               </div>
             )}
 
-            {/* Others */}
             {others.length > 0 && (
               <>
                 <hr className="divider" />
                 <div className="section-header">
                   <h2 className="section-title">Other Available Tasks</h2>
-                  <span className="section-subtitle">{others.length} tasks</span>
+                  <span className="section-subtitle">
+                    {others.length} tasks
+                  </span>
                 </div>
                 <div className="ticket-grid">
-                  {others.map(ticket => (
-                    <div key={ticket.id} className={`ticket-card ${getCategoryClass(ticket.category)}`} style={{ opacity: 0.85 }}>
+                  {others.map((ticket) => (
+                    <div
+                      key={ticket.fix_id}
+                      className={`ticket-card ${getCategoryClass(ticket.category)}`}
+                      style={{ opacity: 0.85 }}
+                    >
                       <div className="ticket-header">
-                        <span className="ticket-id">Ticket #{ticket.id}</span>
-                        <span className="status-badge status-approved">Available</span>
+                        <span className="ticket-id">
+                          Ticket #{ticket.fix_id}
+                        </span>
+                        <span className="status-badge status-approved">
+                          Available
+                        </span>
                       </div>
-                      <div className="ticket-title">{ticket.title}</div>
+                      <div className="ticket-title">{ticket.fix_name}</div>
                       <div className="ticket-meta">
                         <span>{ticket.category}</span>
                       </div>
-                      <div className="ticket-desc">{ticket.description}</div>
+                      <div className="ticket-desc">{ticket.fix_detail}</div>
                       <button
-                        onClick={() => updateTicketStatus(ticket.id, 'approved', currentUser.id)}
+                        onClick={() => handletakejob(ticket)}
                         className="btn btn-secondary btn-full"
                       >
                         Take Job (Cross-Role)
@@ -246,8 +384,7 @@ export default function TechnicianPage() {
           </div>
         )}
 
-        {/* My Jobs Tab */}
-        {techTab === 'my-jobs' && (
+        {techTab === "my-jobs" && (
           <div>
             <div className="section-header">
               <h2 className="section-title">Tasks in Progress</h2>
@@ -259,24 +396,37 @@ export default function TechnicianPage() {
                 <div className="empty-state">
                   <div className="empty-state-icon">📭</div>
                   <div className="empty-state-title">No active jobs</div>
-                  <div className="empty-state-desc">Go to "Available" tab to pick up work.</div>
+                  <div className="empty-state-desc">
+                    Go to "Available" tab to pick up work.
+                  </div>
                 </div>
               </div>
             ) : (
               <>
-                <div className="ticket-grid" style={{ marginBottom: '2rem' }}>
-                  {myJobs.map(ticket => (
-                    <div key={ticket.id} className={`ticket-card ${getCategoryClass(ticket.category)}`} style={{ borderLeft: '4px solid var(--primary-500)' }}>
+                <div className="ticket-grid" style={{ marginBottom: "2rem" }}>
+                  {myJobs.map((ticket) => (
+                    <div
+                      key={ticket.fix_id}
+                      className={`ticket-card ${getCategoryClass(ticket.category)}`}
+                      style={{ borderLeft: "4px solid var(--primary-500)" }}
+                    >
                       <div className="ticket-header">
-                        <span className="ticket-id">Ticket #{ticket.id}</span>
-                        <span className="status-badge status-approved">Working</span>
+                        <span className="ticket-id">
+                          Ticket #{ticket.fix_id}
+                        </span>
+                        <span className="status-badge status-approved">
+                          Working
+                        </span>
                       </div>
-                      <div className="ticket-title">{ticket.title}</div>
+                      <div className="ticket-title">{ticket.fix_name}</div>
                       <div className="ticket-meta">
                         <span>{ticket.category}</span>
                       </div>
-                      <div className="ticket-desc">{ticket.description}</div>
-                      <div className="ticket-actions" style={{ flexDirection: 'column' }}>
+                      <div className="ticket-desc">{ticket.fix_detail}</div>
+                      <div
+                        className="ticket-actions"
+                        style={{ flexDirection: "column" }}
+                      >
                         <button
                           onClick={() => handleCompleteJob(ticket)}
                           className="btn btn-success btn-full"
@@ -286,7 +436,11 @@ export default function TechnicianPage() {
                         <button
                           onClick={() => handleCancelJob(ticket)}
                           className="btn btn-ghost btn-full"
-                          style={{ color: 'var(--danger-500)', fontSize: '0.8rem', marginTop: '0.25rem' }}
+                          style={{
+                            color: "var(--danger-500)",
+                            fontSize: "0.8rem",
+                            marginTop: "0.25rem",
+                          }}
                         >
                           Request Cancellation
                         </button>
@@ -295,24 +449,41 @@ export default function TechnicianPage() {
                   ))}
                 </div>
 
-                {/* Pending Cancellations */}
                 {myCancelRequests.length > 0 && (
                   <>
                     <hr className="divider" />
                     <div className="section-header">
-                      <h2 className="section-title" style={{ color: 'var(--warning-600)' }}>⏳ Pending Cancellation</h2>
+                      <h2
+                        className="section-title"
+                        style={{ color: "var(--warning-600)" }}
+                      >
+                        ⏳ Pending Cancellation
+                      </h2>
                     </div>
                     <div className="ticket-grid">
-                      {myCancelRequests.map(ticket => (
-                        <div key={ticket.id} className="ticket-card" style={{ borderLeft: '4px solid var(--warning-500)', opacity: 0.7 }}>
+                      {myCancelRequests.map((ticket) => (
+                        <div
+                          key={ticket.id}
+                          className="ticket-card"
+                          style={{
+                            borderLeft: "4px solid var(--warning-500)",
+                            opacity: 0.7,
+                          }}
+                        >
                           <div className="ticket-header">
-                            <span className="ticket-id">Ticket #{ticket.id}</span>
-                            <span className="status-badge status-cancellation_requested">Awaiting</span>
+                            <span className="ticket-id">
+                              Ticket #{ticket.id}
+                            </span>
+                            <span className="status-badge status-cancellation_requested">
+                              Awaiting
+                            </span>
                           </div>
                           <div className="ticket-title">{ticket.title}</div>
                           <div className="reason-box">
                             <div className="reason-box-label">Your Reason</div>
-                            <div className="reason-box-text">{ticket.cancellationReason}</div>
+                            <div className="reason-box-text">
+                              {ticket.cancellationReason}
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -324,36 +495,45 @@ export default function TechnicianPage() {
           </div>
         )}
 
-        {/* Completed Tab */}
-        {techTab === 'completed' && (
+        {techTab === "completed" && (
           <div>
             <div className="section-header">
               <h2 className="section-title">Completed Jobs</h2>
-              <span className="section-subtitle">{myCompleted.length} total</span>
+              <span className="section-subtitle">
+                {myCompleted.length} total
+              </span>
             </div>
             {myCompleted.length === 0 ? (
               <div className="card">
                 <div className="empty-state">
                   <div className="empty-state-icon">✅</div>
                   <div className="empty-state-title">No completed jobs yet</div>
-                  <div className="empty-state-desc">Complete your first job to see it here.</div>
+                  <div className="empty-state-desc">
+                    Complete your first job to see it here.
+                  </div>
                 </div>
               </div>
             ) : (
               <div className="ticket-grid">
-                {myCompleted.map(ticket => (
-                  <div key={ticket.id} className={`ticket-card ${getCategoryClass(ticket.category)}`} style={{ opacity: 0.9 }}>
+                {myCompleted.map((ticket) => (
+                  <div
+                    key={ticket.id}
+                    className={`ticket-card ${getCategoryClass(ticket.category)}`}
+                    style={{ opacity: 0.9 }}
+                  >
                     <div className="ticket-header">
-                      <span className="ticket-id">Ticket #{ticket.id}</span>
-                      <span className="status-badge status-completed">Completed</span>
+                      <span className="ticket-id">Ticket #{ticket.fix_id}</span>
+                      <span className="status-badge status-completed">
+                        Completed
+                      </span>
                     </div>
-                    <div className="ticket-title">{ticket.title}</div>
+                    <div className="ticket-title">{ticket.fix_name}</div>
                     <div className="ticket-meta">
                       <span>{ticket.category}</span>
                       <span className="dot"></span>
-                      <span>{ticket.createdAt}</span>
+                      <span>{ticket.report_date}</span>
                     </div>
-                    <div className="ticket-desc">{ticket.description}</div>
+                    <div className="ticket-desc">{ticket.fix_detail}</div>
                   </div>
                 ))}
               </div>
@@ -362,5 +542,13 @@ export default function TechnicianPage() {
         )}
       </div>
     </>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <TechnicianPage />
+    </Suspense>
   );
 }
