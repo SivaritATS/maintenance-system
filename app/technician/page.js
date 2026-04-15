@@ -138,8 +138,8 @@ function TechnicianPage() {
         <div style="text-align: left; font-size: 0.9rem;">
           <div style="margin-bottom: 1.25rem; padding: 1rem; background: #f3f4f6; border-radius: 12px;">
             <p style="margin-bottom: 0.4rem; color: #6b7280; font-size: 0.8rem;">TECHNICIAN</p>
-            <p style="margin-bottom: 0.25rem; font-weight: 600;">${currentUser.name}</p>
-            <p style="margin: 0; color: #9ca3af; font-size: 0.85rem;">ID: ${currentUser.id}</p>
+            <p style="margin-bottom: 0.25rem; font-weight: 600;">${operatorinfo.fnames + " " + operatorinfo.lnames}</p>
+            <p style="margin: 0; color: #9ca3af; font-size: 0.85rem;">ID: ${decryptuser}</p>
           </div>
           <div>
             <label style="display:block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.85rem; color: #374151;">Upload Proof of Work</label>
@@ -166,15 +166,76 @@ function TechnicianPage() {
     });
 
     if (formValues) {
-      updateTicketStatus(ticket.id, "completed");
-      updateUserScore(currentUser.id, 0.5);
-      Swal.fire({
-        icon: "success",
-        title: "Job Completed! 🎉",
-        text: "+0.5 Score earned!",
-        timer: 2000,
-        showConfirmButton: false,
-      });
+      try {
+        let credit = null;
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/api/getfixs/byid`,
+          {
+            id: ticket.fix_id,
+          },
+        );
+        if (response.status === 200) {
+          const data = response.data[0];
+          credit = data.credit;
+        }
+
+        const response1 = await axios.put(
+          `${process.env.NEXT_PUBLIC_URL}/api/updatestatus/updatebyid`,
+          {
+            id: ticket.fix_id,
+            status: "completed",
+          },
+        );
+
+        const stringDate = new Date()
+          .toISOString()
+          .slice(0, 19)
+          .replace("T", " ");
+
+        const response2 = await axios.put(
+          `${process.env.NEXT_PUBLIC_URL}/api/updatefinishdate`,
+          {
+            id: ticket.fix_id,
+            date: stringDate,
+          },
+        );
+
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(formValues.image);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = (error) => reject(error);
+        });
+
+        const response3 = await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/api/addpicture`,
+          {
+            id: ticket.fix_id,
+            image: base64,
+          },
+        );
+        const response4 = await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/api/addtrans`,
+          { operator_id: decryptuser, credit_received: credit },
+        );
+
+        if (
+          response1.status === 200 &&
+          response2.status === 200 &&
+          response3.status === 200 &&
+          response4.status === 200
+        ) {
+          Swal.fire({
+            icon: "success",
+            title: `Job Completed! ${credit} coins add to your account 🎉`,
+            text: "Upload และบันทึกสำเร็จ",
+            timer: 2000,
+            showConfirmButton: false,
+          });
+        }
+      } catch (error) {
+        console.log(error);
+      }
     }
   };
 

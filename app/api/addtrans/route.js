@@ -2,11 +2,11 @@ import { pool } from "@/server";
 
 export async function POST(req) {
   try {
-    const { fname, lname, role, password, category } = await req.json();
+    const { operator_id, credit_received } = await req.json();
 
     await pool.query(
-      `INSERT INTO operators (fnames,lnames,roles,passwords,category) VALUES (?,?,?,?,?)`,
-      [fname, lname, role, password, category],
+      "INSERT INTO Transactions (operator_id,credit_received) VALUES (?,?)",
+      [operator_id, credit_received],
     );
 
     return Response.json({ message: "Insert success" });
