@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useMaintenance } from "../context/MaintenanceContext";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -8,8 +9,17 @@ import axios from "axios";
 import { get } from "http";
 import { decrypt } from "@/encrypt";
 import Swal from "sweetalert2";
+import { Suspense } from "react";
 
-export default function UserPage() {
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <UserPage />
+    </Suspense>
+  );
+}
+
+function UserPage() {
   const { currentUser, tickets, createTicket } = useMaintenance();
   const router = useRouter();
 
@@ -140,7 +150,6 @@ export default function UserPage() {
     <>
       <Header />
       <div className="container animate-in">
-        {/* Stats */}
         <div className="stats-row">
           <div
             className="stat-card"
@@ -157,6 +166,7 @@ export default function UserPage() {
               <div className="stat-label">Total Reports</div>
             </div>
           </div>
+
           <div
             className="stat-card"
             onClick={() => setActiveStatus("pending")}
@@ -173,6 +183,7 @@ export default function UserPage() {
               <div className="stat-label">Pending</div>
             </div>
           </div>
+
           <div
             className="stat-card"
             onClick={() => setActiveStatus("in_progress")}
@@ -189,6 +200,7 @@ export default function UserPage() {
               <div className="stat-label">In Progress</div>
             </div>
           </div>
+
           <div
             className="stat-card"
             onClick={() => setActiveStatus("completed")}
@@ -208,7 +220,6 @@ export default function UserPage() {
         </div>
 
         <div className="page-grid page-grid-2">
-          {/* Report Form */}
           <div
             className="card"
             style={{ alignSelf: "start", position: "sticky", top: "80px" }}
@@ -216,6 +227,7 @@ export default function UserPage() {
             <div className="card-header">
               <h2 className="card-title">📋 New Report</h2>
             </div>
+
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label className="form-label">Issue Title</label>
@@ -229,6 +241,7 @@ export default function UserPage() {
                   required
                 />
               </div>
+
               <div className="form-group">
                 <label className="form-label">Category</label>
                 <select
@@ -245,6 +258,7 @@ export default function UserPage() {
                   ))}
                 </select>
               </div>
+
               <div className="form-group">
                 <label className="form-label">Location</label>
                 <input
@@ -257,6 +271,7 @@ export default function UserPage() {
                   required
                 />
               </div>
+
               <div className="form-group">
                 <label className="form-label">Description</label>
                 <textarea
@@ -270,18 +285,19 @@ export default function UserPage() {
                   required
                 />
               </div>
+
               <button type="submit" className="btn btn-primary btn-full">
                 Submit Report
               </button>
             </form>
           </div>
 
-          {/* My Tickets List */}
           <div>
             <div className="section-header">
               <h2 className="section-title">My Reports</h2>
               <span className="section-subtitle">{data.length} total</span>
             </div>
+
             {data.length === 0 ? (
               <div className="card">
                 <div className="empty-state">
@@ -302,17 +318,23 @@ export default function UserPage() {
                     <div className="ticket-header">
                       <span className="ticket-id">Ticket #{ticket.fix_id}</span>
                       <span
-                        className={`status-badge status-${ticket.fix_status.replace(" ", "-")}`}
+                        className={`status-badge status-${ticket.fix_status.replace(
+                          " ",
+                          "-",
+                        )}`}
                       >
                         {getStatusLabel(ticket.fix_status)}
                       </span>
                     </div>
+
                     <div className="ticket-title">{ticket.fix_name}</div>
+
                     <div className="ticket-meta">
                       <span>{ticket.category}</span>
                       <span className="dot"></span>
                       <span>{ticket.report_date}</span>
                     </div>
+
                     <div className="ticket-desc">{ticket.fix_detail}</div>
                   </div>
                 ))}
