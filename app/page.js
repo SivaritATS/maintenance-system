@@ -5,7 +5,8 @@ import { useMaintenance } from "./context/MaintenanceContext";
 import Swal from "sweetalert2";
 import axios from "axios";
 import RoleSwitcher from "./components/RoleSwitcher_login";
-
+import { encrypt } from "@/encrypt";
+import { decrypt } from "@/encrypt";
 export default function LoginPage() {
   const { login, currentUser } = useMaintenance();
   const router = useRouter();
@@ -62,14 +63,12 @@ export default function LoginPage() {
               showConfirmButton: false,
             });
             if (role === "technician") {
-              localStorage.setItem("uid", data.operator_id);
-              localStorage.setItem("uname", data.fnames);
-              router.push("/technician");
+              const encryptedId = encodeURIComponent(encrypt(loginId));
+              router.push(`/technician?id=${encryptedId}`);
             }
             if (role === "admin") {
-              localStorage.setItem("uid", data.operator_id);
-              localStorage.setItem("uname", data.fnames);
-              router.push("/admin");
+              const encryptedId = encodeURIComponent(encrypt(loginId));
+              router.push(`/admin?id=${encryptedId}`);
             }
           } else {
             setError("Invalid ID or Password");
@@ -107,10 +106,8 @@ export default function LoginPage() {
               timer: 1500,
               showConfirmButton: false,
             });
-            localStorage.setItem("uid", data.operator_id);
-            localStorage.setItem("uname", data.fnames);
-
-            router.push("/user");
+            const encryptedId = encodeURIComponent(encrypt(loginId));
+            router.push(`/user?id=${encryptedId}`);
           } else {
             setError("Invalid ID or Password");
             Swal.fire({
