@@ -2,12 +2,12 @@ import { pool } from "@/server";
 
 export async function PUT(req) {
   try {
-    const { id, status, finish_date, operator } = await req.json();
+    const { id, status } = await req.json();
 
-    await pool.query(
-      "UPDATE fixs SET fix_status=?, finish_date=?,operator=? WHERE fix_id=?",
-      [status, finish_date, operator, id],
-    );
+    await pool.query("UPDATE jobs_cancellation SET status=? WHERE fix_no=?", [
+      status,
+      id,
+    ]);
 
     return Response.json({ message: "Update success" });
   } catch (error) {

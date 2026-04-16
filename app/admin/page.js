@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useMaintenance } from "../context/MaintenanceContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "../components/Header";
@@ -10,7 +10,7 @@ import axios from "axios";
 
 const MySwal = withReactContent(Swal);
 
-export default function AdminPage() {
+function AdminContent() {
   const { currentUser, tickets, updateTicketStatus, updateUserScore, users } =
     useMaintenance();
   const router = useRouter();
@@ -20,11 +20,7 @@ export default function AdminPage() {
   const searchParams = useSearchParams();
   const [fixdata, setFixData] = useState([]);
   const [jobcancle, setJobcancle] = useState([]);
-  // useEffect(() => {
-  //   if (!currentUser) router.push("/");
-  // }, [currentUser, router]);
-
-  // if (!currentUser) return null;
+  const [scoreMap, setScoreMap] = useState({});
 
   useEffect(() => {
     const encryptedId = searchParams.get("id");
@@ -37,6 +33,7 @@ export default function AdminPage() {
       : null;
     setDecryptUser(loginId);
   }, [searchParams]);
+
   useEffect(() => {
     const validateUser = async () => {
       try {
@@ -86,14 +83,155 @@ export default function AdminPage() {
     validateUser();
     getinformation();
   }, [decryptuser]);
-  // console.log(fixdata);
+
+  useEffect(() => {
+    const fetchScores = async () => {
+      const map = {};
+      for (const ticket of jobcancle) {
+        if (ticket.operator && !map[ticket.operator]) {
+          const score = await getscore(ticket.operator);
+          map[ticket.operator] = score;
+        }
+      }
+      setScoreMap(map);
+    };
+    if (jobcancle.length > 0) {
+      fetchScores();
+    }
+  }, [jobcancle]);
+
   const pendingTickets = fixdata.filter((t) => t.fix_status === "pending");
   const cancellationRequests = jobcancle.filter((t) => t.status === "pending");
-
+  // console.log(cancellationRequests);
   const allApproved = fixdata.filter(
     (t) => t.fix_status === "approved" || t.fix_status === "inprogress",
   );
   const allCompleted = fixdata.filter((t) => t.fix_status === "completed");
+
+  const getscore = async (id) => {
+    const response = await axios.post(
+      `${process.env.NEXT_PUBLIC_URL}/api/getscore`,
+      {
+        id: id,
+      },
+    );
+    if (response.status === 200) {
+      const data = response.data;
+      let total = 0;
+      data.forEach((item) => {
+        total += item.earn;
+      });
+      return data.length > 0 ? total / data.length : 0;
+    }
+    return null;
+  };
+
+  const handlingcancleapprove = async (ticket) => {
+    try {
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_URL}/api/updatestatus/`,
+        {
+          id: ticket.fix_no,
+          status: "approved",
+          finish_date: null,
+          operator: null,
+        },
+      );
+      if (response.status === 200) {
+        const response1 = await axios.put(
+          `${process.env.NEXT_PUBLIC_URL}/api/updatejobcancle/`,
+          {
+            id: ticket.fix_no,
+            status: "approved",
+          },
+        );
+        if (response1.status === 200) {
+          Swal.fire({
+            icon: "success",
+            title: `Approved for ticket no: ${ticket.fix_no}`,
+            text: `${ticket.fix_no} has been approved`,
+          });
+        }
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Something went wrong ",
+        text: "Please Try Again.",
+      });
+    }
+  };
+  const handlingcanclerejected = async (ticket) => {
+    try {
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_URL}/api/updatestatus/`,
+        {
+          id: ticket.fix_no,
+          status: "rejected",
+          finish_date: null,
+          operator: null,
+        },
+      );
+      if (response.status === 200) {
+        const response1 = await axios.put(
+          `${process.env.NEXT_PUBLIC_URL}/api/updatejobcancle/`,
+          {
+            id: ticket.fix_no,
+            status: "rejected",
+          },
+        );
+        if (response1.status === 200) {
+          const response2 = await axios.post(
+            `${process.env.NEXT_PUBLIC_URL}/api/addscore/`,
+            {
+              operator: ticket.operator,
+              detail: "Bad reason",
+              earn: -5,
+              fix_id: ticket.fix_no,
+            },
+          );
+          if (response2.status === 200) {
+            Swal.fire({
+              icon: "success",
+              title: `rejected for ticket no: ${ticket.fix_no} -5 score`,
+              text: `${ticket.fix_no} has been rejected -5 score`,
+            });
+          }
+        }
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Something went wrong ",
+        text: "Please Try Again.",
+      });
+    }
+  };
+
+  const handlingrequestreject = async (ticket) => {
+    try {
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_URL}/api/updatestatus/updatebyid`,
+        {
+          status: "rejected",
+          id: ticket.fix_id,
+        },
+      );
+      if (response.status === 200) {
+        Swal.fire({
+          icon: "success",
+          title: `ticket rejected `,
+          text: `ticket has been rejected`,
+        });
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Something went wrong ",
+        text: "Please Try Again.",
+      });
+    }
+  };
   const handlingrequestapprove = async (ticket) => {
     try {
       const response = await axios.put(
@@ -106,8 +244,8 @@ export default function AdminPage() {
       if (response.status === 200) {
         Swal.fire({
           icon: "success",
-          title: `Approved for ticket no: ${ticket.fix_id}`,
-          text: `${ticket.fix_id} has been approved`,
+          title: `ticket approved `,
+          text: `ticket has been approved`,
         });
       }
     } catch (error) {
@@ -117,41 +255,8 @@ export default function AdminPage() {
         text: "Please Try Again.",
       });
     }
-    // Swal.fire({
-    //   icon: "error",
-    //   title: "Unauthorized",
-    //   text: "Unauthorized to access this page.",
-    // });
   };
-  const handlingreject = async (ticket) => {
-    try {
-      const response = await axios.put(
-        `${process.env.NEXT_PUBLIC_URL}/api/updatestatus/updatebyid`,
-        {
-          status: "rejected",
-          id: ticket.fix_id,
-        },
-      );
-      if (response.status === 200) {
-        Swal.fire({
-          icon: "success",
-          title: `rejected for ticket no: ${ticket.fix_id}`,
-          text: `${ticket.fix_id} has been rejected`,
-        });
-      }
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Something went wrong ",
-        text: "Please Try Again.",
-      });
-    }
-    // Swal.fire({
-    //   icon: "error",
-    //   title: "Unauthorized",
-    //   text: "Unauthorized to access this page.",
-    // });
-  };
+
   const getFilteredTickets = () => {
     switch (activeStatus) {
       case "approved":
@@ -164,26 +269,11 @@ export default function AdminPage() {
   };
 
   const filteredList = getFilteredTickets();
-  const handleCancellation = (ticket, isApproved) => {
-    const techUser = users.find((u) => u.id === ticket.assigneeId);
-    const techName = techUser ? techUser.name : ticket.assigneeId;
 
-    // if (isApproved) {
-    //   updateTicketStatus(ticket.id, "approved", null);
-    //   MySwal.fire(
-    //     "Allowed",
-    //     `Cancellation approved for ${techName}. No penalty applied.`,
-    //     "success",
-    //   );
-    // } else {
-    //   updateTicketStatus(ticket.id, "approved", null);
-    //   updateUserScore(ticket.assigneeId, -0.5);
-    //   MySwal.fire(
-    //     "Penalized",
-    //     `0.5 points deducted from ${techName}.`,
-    //     "warning",
-    //   );
-    // }
+  const handleCancellation = (ticket, isApproved) => {
+    const techUser = users.find((u) => u.id === ticket.operator);
+    const techName = techUser ? techUser.name : ticket.operator;
+
     const handleallowcancle = async (ticket) => {
       MySwal.fire(
         "Allowed",
@@ -323,7 +413,7 @@ export default function AdminPage() {
                             ✓ Approve
                           </button>
                           <button
-                            onClick={() => handlingreject(ticket)}
+                            onClick={() => handlingrequestreject(ticket)}
                             className="btn btn-danger btn-sm"
                             style={{ flex: 1 }}
                           >
@@ -355,30 +445,28 @@ export default function AdminPage() {
                 <div className="ticket-grid">
                   {cancellationRequests.map((ticket) => {
                     const techUser = users.find(
-                      (u) => u.id === ticket.assigneeId,
+                      (u) => u.id === ticket.operator,
                     );
 
                     const techName =
                       techUser && techUser.operator
                         ? techUser.operator
-                        : "Unassigned";
-                    const techScore = techUser?.score ?? "?";
+                        : (ticket.operator ?? "Unassigned");
+                    const techScore = scoreMap[ticket.operator] ?? "?";
 
                     return (
                       <div
-                        key={ticket.id}
+                        key={ticket.fix_no}
                         className="ticket-card"
                         style={{ borderColor: "var(--danger-200)" }}
                       >
                         <div className="ticket-header">
-                          <span className="ticket-id">
-                            #{ticket.fix_no ?? ticket.fix_id}
-                          </span>
+                          <span className="ticket-id">#{ticket.fix_no}</span>
                           <span className="status-badge status-rejected">
                             Cancel Request
                           </span>
                         </div>
-                        <div className="ticket-title">{ticket.name}</div>
+                        <div className="ticket-title">{ticket.fix_no}</div>
                         <div className="ticket-meta">
                           <span>🔧 {techName}</span>
                           <span className="dot"></span>
@@ -392,14 +480,14 @@ export default function AdminPage() {
 
                         <div className="ticket-actions">
                           <button
-                            onClick={() => handleCancellation(ticket, true)}
+                            onClick={() => handlingcancleapprove(ticket)}
                             className="btn btn-secondary btn-sm"
                             style={{ flex: 1 }}
                           >
                             Allow
                           </button>
                           <button
-                            onClick={() => handleCancellation(ticket, false)}
+                            onClick={() => handlingcanclerejected(ticket)}
                             className="btn btn-danger btn-sm"
                             style={{ flex: 1 }}
                           >
@@ -474,5 +562,13 @@ export default function AdminPage() {
         )}
       </div>
     </>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminContent />
+    </Suspense>
   );
 }
