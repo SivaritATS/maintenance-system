@@ -16,6 +16,7 @@ function TechnicianPage() {
   const searchParams = useSearchParams();
   const [fixdata, setFixData] = useState([]);
   const [operatorinfo, setOperatorInfo] = useState([]);
+  const [scoredata, setScoredata] = useState([]);
 
   useEffect(() => {
     const encryptedId = searchParams.get("id");
@@ -39,7 +40,11 @@ function TechnicianPage() {
         );
         setFixData(response.data);
       } catch (error) {
-        console.error(error);
+        Swal.fire({
+          icon: "error",
+          title: "Unable to Synchronize with database",
+          text: "Unauthorized to access this page.",
+        });
       }
     };
 
@@ -53,6 +58,7 @@ function TechnicianPage() {
         );
         setOperatorInfo(response.data[0]);
         getfixs();
+        getscore();
       } catch (error) {
         Swal.fire({
           icon: "error",
@@ -60,7 +66,25 @@ function TechnicianPage() {
           text: "Unauthorized to access this page.",
         });
         router.push("/");
-        console.log(error);
+      }
+    };
+    const getscore = async () => {
+      try {
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/api/getscore`,
+          {
+            id: decryptuser,
+          },
+        );
+        if (response.status === 200) {
+          setScoredata(response.data);
+        }
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Unable to Synchronize with database",
+          text: "Unauthorized to access this page.",
+        });
       }
     };
 
@@ -99,6 +123,10 @@ function TechnicianPage() {
       });
     }
   };
+  const calmyscore =
+    Array.isArray(scoredata) && scoredata.length > 0
+      ? scoredata.reduce((sum, item) => sum + item.earn, 0) / scoredata.length
+      : 0;
 
   const availableTickets = fixdata.filter((t) => t.fix_status === "approved");
   const myJobs = fixdata.filter(
@@ -218,12 +246,22 @@ function TechnicianPage() {
           `${process.env.NEXT_PUBLIC_URL}/api/addtrans`,
           { operator_id: decryptuser, credit_received: credit },
         );
+        const response5 = await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/api/addscore`,
+          {
+            operator: decryptuser,
+            detail: "completed task",
+            earn: 5,
+            fix_id: ticket.fix_id,
+          },
+        );
 
         if (
           response1.status === 200 &&
           response2.status === 200 &&
           response3.status === 200 &&
-          response4.status === 200
+          response4.status === 200 &&
+          response5.status === 200
         ) {
           Swal.fire({
             icon: "success",
@@ -259,6 +297,8 @@ function TechnicianPage() {
           {
             id: Number(ticket.fix_id),
             detail: reason,
+            operator: decryptuser,
+            status: "pending",
           },
         );
         if (response.status === 200) {
@@ -329,7 +369,7 @@ function TechnicianPage() {
           <div className="stat-card">
             <div className="stat-icon amber">★</div>
             <div>
-              <div className="stat-value">{5}</div>
+              <div className="stat-value">{calmyscore}</div>
               <div className="stat-label">Score</div>
             </div>
           </div>

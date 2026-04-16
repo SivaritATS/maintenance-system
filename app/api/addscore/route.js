@@ -2,13 +2,11 @@ import { pool } from "@/server";
 
 export async function POST(req) {
   try {
-    const { id, detail, operator,status } = await req.json();
+    const { operator, detail, earn, fix_id } = await req.json();
 
     await pool.query(
-      `INSERT INTO jobs_cancellation
-      (fix_no,detail,operator,status) 
-      VALUES (?,?,?,?)`,
-      [id, detail, operator,status],
+      `INSERT INTO score(operator,detail,earn,fix_id) VALUES (?,?,?,?)`,
+      [operator, detail, earn, fix_id],
     );
 
     return Response.json({ message: "Insert success" });
