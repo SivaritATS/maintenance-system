@@ -92,7 +92,7 @@ function UserPage() {
 
   if (!decryptuser) return null;
 
-  const myTickets = tickets.filter((t) => t.reporterId === decryptuser);
+  const myTickets = data;
   const pendingCount = data.filter((t) => t.fix_status === "pending").length;
   const approvedCount = data.filter((t) => t.fix_status === "approved").length;
   const completedCount = data.filter(
@@ -162,7 +162,7 @@ function UserPage() {
           >
             <div className="stat-icon purple">📝</div>
             <div>
-              <div className="stat-value">{myTickets.length}</div>
+              <div className="stat-value">{data.length}</div>
               <div className="stat-label">Total Reports</div>
             </div>
           </div>

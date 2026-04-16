@@ -89,9 +89,69 @@ export default function AdminPage() {
   // console.log(fixdata);
   const pendingTickets = fixdata.filter((t) => t.fix_status === "pending");
   const cancellationRequests = jobcancle.filter((t) => t.status === "pending");
-  const allApproved = fixdata.filter((t) => t.fix_status === "approved");
-  const allCompleted = fixdata.filter((t) => t.fix_status === "completed");
 
+  const allApproved = fixdata.filter(
+    (t) => t.fix_status === "approved" || t.fix_status === "inprogress",
+  );
+  const allCompleted = fixdata.filter((t) => t.fix_status === "completed");
+  const handlingrequestapprove = async (ticket) => {
+    try {
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_URL}/api/updatestatus/updatebyid`,
+        {
+          status: "approved",
+          id: ticket.fix_id,
+        },
+      );
+      if (response.status === 200) {
+        Swal.fire({
+          icon: "success",
+          title: `Approved for ticket no: ${ticket.fix_id}`,
+          text: `${ticket.fix_id} has been approved`,
+        });
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Something went wrong ",
+        text: "Please Try Again.",
+      });
+    }
+    // Swal.fire({
+    //   icon: "error",
+    //   title: "Unauthorized",
+    //   text: "Unauthorized to access this page.",
+    // });
+  };
+  const handlingreject = async (ticket) => {
+    try {
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_URL}/api/updatestatus/updatebyid`,
+        {
+          status: "rejected",
+          id: ticket.fix_id,
+        },
+      );
+      if (response.status === 200) {
+        Swal.fire({
+          icon: "success",
+          title: `rejected for ticket no: ${ticket.fix_id}`,
+          text: `${ticket.fix_id} has been rejected`,
+        });
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Something went wrong ",
+        text: "Please Try Again.",
+      });
+    }
+    // Swal.fire({
+    //   icon: "error",
+    //   title: "Unauthorized",
+    //   text: "Unauthorized to access this page.",
+    // });
+  };
   const getFilteredTickets = () => {
     switch (activeStatus) {
       case "approved":
@@ -104,27 +164,33 @@ export default function AdminPage() {
   };
 
   const filteredList = getFilteredTickets();
-
   const handleCancellation = (ticket, isApproved) => {
     const techUser = users.find((u) => u.id === ticket.assigneeId);
     const techName = techUser ? techUser.name : ticket.assigneeId;
 
-    if (isApproved) {
-      updateTicketStatus(ticket.id, "approved", null);
+    // if (isApproved) {
+    //   updateTicketStatus(ticket.id, "approved", null);
+    //   MySwal.fire(
+    //     "Allowed",
+    //     `Cancellation approved for ${techName}. No penalty applied.`,
+    //     "success",
+    //   );
+    // } else {
+    //   updateTicketStatus(ticket.id, "approved", null);
+    //   updateUserScore(ticket.assigneeId, -0.5);
+    //   MySwal.fire(
+    //     "Penalized",
+    //     `0.5 points deducted from ${techName}.`,
+    //     "warning",
+    //   );
+    // }
+    const handleallowcancle = async (ticket) => {
       MySwal.fire(
         "Allowed",
         `Cancellation approved for ${techName}. No penalty applied.`,
         "success",
       );
-    } else {
-      updateTicketStatus(ticket.id, "approved", null);
-      updateUserScore(ticket.assigneeId, -0.5);
-      MySwal.fire(
-        "Penalized",
-        `0.5 points deducted from ${techName}.`,
-        "warning",
-      );
-    }
+    };
   };
 
   const getCategoryClass = (cat) => {
@@ -250,18 +316,14 @@ export default function AdminPage() {
                         <div className="ticket-desc">{ticket.fix_detail}</div>
                         <div className="ticket-actions">
                           <button
-                            onClick={() =>
-                              updateTicketStatus(ticket.fix_id, "approved")
-                            }
+                            onClick={() => handlingrequestapprove(ticket)}
                             className="btn btn-primary btn-sm"
                             style={{ flex: 1 }}
                           >
                             ✓ Approve
                           </button>
                           <button
-                            onClick={() =>
-                              updateTicketStatus(ticket.id, "rejected")
-                            }
+                            onClick={() => handlingreject(ticket)}
                             className="btn btn-danger btn-sm"
                             style={{ flex: 1 }}
                           >
@@ -295,10 +357,12 @@ export default function AdminPage() {
                     const techUser = users.find(
                       (u) => u.id === ticket.assigneeId,
                     );
-                    const techName = techUser
-                      ? techUser.name
-                      : ticket.assigneeId;
-                    const techScore = techUser ? techUser.score : "?";
+
+                    const techName =
+                      techUser && techUser.operator
+                        ? techUser.operator
+                        : "Unassigned";
+                    const techScore = techUser?.score ?? "?";
 
                     return (
                       <div
@@ -307,12 +371,14 @@ export default function AdminPage() {
                         style={{ borderColor: "var(--danger-200)" }}
                       >
                         <div className="ticket-header">
-                          <span className="ticket-id">#{ticket.fix_no}</span>
+                          <span className="ticket-id">
+                            #{ticket.fix_no ?? ticket.fix_id}
+                          </span>
                           <span className="status-badge status-rejected">
                             Cancel Request
                           </span>
                         </div>
-                        <div className="ticket-title">{ticket.title}</div>
+                        <div className="ticket-title">{ticket.name}</div>
                         <div className="ticket-meta">
                           <span>🔧 {techName}</span>
                           <span className="dot"></span>
@@ -373,32 +439,32 @@ export default function AdminPage() {
                   const techUser = users.find(
                     (u) => u.id === ticket.assigneeId,
                   );
-                  const techName = techUser ? techUser.name : "Unassigned";
+                  const techName = techUser?.operator ?? "Unassigned";
 
                   return (
                     <div
-                      key={ticket.id}
+                      key={ticket.fix_id}
                       className={`ticket-card ${getCategoryClass(ticket.category)}`}
                     >
                       <div className="ticket-header">
-                        <span className="ticket-id">#{ticket.id}</span>
+                        <span className="ticket-id">#{ticket.fix_id}</span>
                         <span
-                          className={`status-badge status-${ticket.status.replace(" ", "-")}`}
+                          className={`status-badge status-${ticket.fix_status.replace(" ", "-")}`}
                         >
-                          {ticket.status === "approved"
+                          {ticket.fix_status === "approved"
                             ? "In Progress"
-                            : ticket.status}
+                            : ticket.fix_status}
                         </span>
                       </div>
-                      <div className="ticket-title">{ticket.title}</div>
+                      <div className="ticket-title">{ticket.fix_name}</div>
                       <div className="ticket-meta">
                         <span>{ticket.category}</span>
                         <span className="dot"></span>
-                        <span>🔧 {techName}</span>
+                        <span>🔧 {ticket.operator ?? "Unassigned"}</span>
                         <span className="dot"></span>
-                        <span>{ticket.createdAt}</span>
+                        <span>{ticket.report_date}</span>
                       </div>
-                      <div className="ticket-desc">{ticket.description}</div>
+                      <div className="ticket-desc">{ticket.fix_detail}</div>
                     </div>
                   );
                 })}
