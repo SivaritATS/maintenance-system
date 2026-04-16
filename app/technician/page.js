@@ -144,7 +144,7 @@ function TechnicianPage() {
   const recommended = fixdata.filter(
     (t) =>
       (t.fix_status === "approved" && t.category === operatorinfo.category) ||
-      operatorinfo.category === "General",
+      (operatorinfo.category === "General" && t.fix_status === "approved"),
   );
 
   const others = fixdata.filter(
