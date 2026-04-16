@@ -132,7 +132,7 @@ function AdminContent() {
         `${process.env.NEXT_PUBLIC_URL}/api/updatestatus/`,
         {
           id: ticket.fix_no,
-          status: "approved",
+          status: "pending",
           finish_date: null,
           operator: null,
         },
