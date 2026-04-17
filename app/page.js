@@ -45,9 +45,9 @@ export default function LoginPage() {
     if (mode === "admin" || mode === "tech") {
       try {
         const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_URL}/api/getoperator`,
+          `${process.env.NEXT_PUBLIC_URL}/api/getoperator/byusername`,
           {
-            id: loginId,
+            username: loginId,
           },
         );
         if (response.status === 200) {
@@ -90,9 +90,9 @@ export default function LoginPage() {
     } else if (mode === "user") {
       try {
         const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_URL}/api/getstudent/byid`,
+          `${process.env.NEXT_PUBLIC_URL}/api/getstudent/byname`,
           {
-            id: loginId,
+            fname: loginId,
           },
         );
         if (response.status === 200) {
