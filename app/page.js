@@ -1,36 +1,139 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useMaintenance } from './context/MaintenanceContext';
-import Swal from 'sweetalert2';
-
+"use client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useMaintenance } from "./context/MaintenanceContext";
+import Swal from "sweetalert2";
+import axios from "axios";
+import RoleSwitcher from "./components/RoleSwitcher_login";
+import { encrypt } from "@/encrypt";
+import { decrypt } from "@/encrypt";
 export default function LoginPage() {
   const { login, currentUser } = useMaintenance();
   const router = useRouter();
-  
-  const [loginId, setLoginId] = useState('');
-  const [loginPwd, setLoginPwd] = useState('');
-  const [error, setError] = useState('');
+
+  const [loginId, setLoginId] = useState("");
+  const [loginPwd, setLoginPwd] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (currentUser) {
-      if (currentUser.role === 'admin') router.push('/admin');
-      else if (currentUser.role === 'tech') router.push('/technician');
-      else router.push('/user');
-    }
-  }, [currentUser, router]);
+    //   if (currentUser) {
+    //     if (currentUser.role === 'admin') router.push('/admin');
+    //     else if (currentUser.role === 'tech') router.push('/technician');
+    //     else router.push('/user');
+    //   }
+    // }, [currentUser, router]);
+    // if (currentUser) {
+    //   if (currentUser.role === 'admin') router.push('/admin');
+    //   else if (currentUser.role === 'tech') router.push('/technician');
+    //   else router.push('/user');
+    // }
+  }, []);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const success = login(loginId, loginPwd);
-    if (!success) {
-      setError('Invalid ID or Password');
+    // const success = login(loginId, loginPwd);
+    const mode = localStorage.getItem("role");
+    if (!mode) {
+      setError("Please select a role before logging in.");
       Swal.fire({
-        icon: 'error',
-        title: 'Login Failed',
-        text: 'Invalid ID or Password. Please try again.',
+        icon: "warning",
+        title: "Role Not Selected",
+        text: "Please select a role before logging in.",
       });
+      return;
     }
+    if (mode === "admin" || mode === "tech") {
+      try {
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/api/getoperator`,
+          {
+            id: loginId,
+          },
+        );
+        if (response.status === 200) {
+          const data = response.data[0];
+          const password = data.passwords;
+          const role = data.roles;
+          if (password === loginPwd) {
+            Swal.fire({
+              icon: "success",
+              title: "Welcome back!",
+              text: `Logged in as ${data.fnames}`,
+              timer: 1500,
+              showConfirmButton: false,
+            });
+            if (role === "technician") {
+              const encryptedId = encodeURIComponent(encrypt(loginId));
+              router.push(`/technician?id=${encryptedId}`);
+            }
+            if (role === "admin") {
+              const encryptedId = encodeURIComponent(encrypt(loginId));
+              router.push(`/admin?id=${encryptedId}`);
+            }
+          } else {
+            setError("Invalid ID or Password");
+            Swal.fire({
+              icon: "error",
+              title: "Login Failed",
+              text: "Invalid ID or Password. Please try again.",
+            });
+          }
+        }
+      } catch (error) {
+        setError("An error occurred during login. Please try again.");
+        Swal.fire({
+          icon: "error",
+          title: "Login Failed",
+          text: "An error occurred during login. Please try again.",
+        });
+      }
+    } else if (mode === "user") {
+      try {
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/api/getstudent/byid`,
+          {
+            id: loginId,
+          },
+        );
+        if (response.status === 200) {
+          const data = response.data[0];
+          const password = data.passwords;
+          if (password === loginPwd) {
+            Swal.fire({
+              icon: "success",
+              title: "Welcome back!",
+              text: `Logged in as ${data.fnames}`,
+              timer: 1500,
+              showConfirmButton: false,
+            });
+            const encryptedId = encodeURIComponent(encrypt(loginId));
+            router.push(`/user?id=${encryptedId}`);
+          } else {
+            setError("Invalid ID or Password");
+            Swal.fire({
+              icon: "error",
+              title: "Login Failed",
+              text: "Invalid ID or Password. Please try again.",
+            });
+          }
+        }
+      } catch (error) {
+        setError("An error occurred during login. Please try again.");
+        Swal.fire({
+          icon: "error",
+          title: "Login Failed",
+          text: "An error occurred during login. Please try again.",
+        });
+      }
+    }
+    // if (!success) {
+    //   setError('Invalid ID or Password');
+    //   Swal.fire({
+    //     icon: 'error',
+    //     title: 'Login Failed',
+    //     text: 'Invalid ID or Password. Please try again.',
+    //   });
+    // }
   };
 
   return (
@@ -40,41 +143,46 @@ export default function LoginPage() {
           <div className="login-logo">UF</div>
           <h1 className="login-title">UniFix</h1>
           <p className="login-subtitle">University Maintenance Portal</p>
-          
+
           <form onSubmit={handleLogin}>
             <div className="form-group">
               <label className="form-label">User ID</label>
-              <input 
+              <input
                 className="form-input"
-                type="text" 
-                value={loginId} 
-                onChange={(e) => setLoginId(e.target.value)} 
+                type="text"
+                value={loginId}
+                onChange={(e) => setLoginId(e.target.value)}
                 placeholder="Enter your ID"
-                required 
+                required
               />
             </div>
             <div className="form-group">
               <label className="form-label">Password</label>
-              <input 
+              <input
                 className="form-input"
-                type="password" 
-                value={loginPwd} 
-                onChange={(e) => setLoginPwd(e.target.value)} 
+                type="password"
+                value={loginPwd}
+                onChange={(e) => setLoginPwd(e.target.value)}
                 placeholder="Enter your password"
-                required 
+                required
               />
             </div>
             {error && <div className="login-error">{error}</div>}
-            <button type="submit" className="btn btn-primary btn-full" style={{ padding: '0.75rem' }}>
+            <button
+              type="submit"
+              className="btn btn-primary btn-full"
+              style={{ padding: "0.75rem" }}
+            >
               Sign In
             </button>
-          </form> 
-          
+          </form>
+
           <div className="login-footer">
             <p>Demo Credentials</p>
           </div>
         </div>
       </div>
+      <RoleSwitcher />
     </div>
   );
 }

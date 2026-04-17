@@ -1,6 +1,6 @@
 export const INITIAL_USERS = [
   // Users (Students/Staff)
-  { id: 'user1', password: 'user1', role: 'user', name: 'Alice Student', department: 'Computer Science' },
+  { id: '1', password: 'user1', role: 'user', name: 'charles', department: 'Computer Science' },
   { id: 'user2', password: 'user2', role: 'user', name: 'Bob Staff', department: 'HR' },
   { id: 'user3', password: 'user3', role: 'user', name: 'Charlie Prof', department: 'Engineering' },
   { id: 'user4', password: 'user4', role: 'user', name: 'Diana Student', department: 'Arts' },

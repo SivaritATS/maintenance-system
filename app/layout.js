@@ -1,7 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { MaintenanceProvider } from './context/MaintenanceContext';
-import RoleSwitcher from './components/RoleSwitcher';
+import RoleSwitcher from './components/RoleSwitcher_login';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +27,7 @@ export default function RootLayout({ children }) {
         <MaintenanceProvider>
           {children}
           {/* Debug Role Switcher - Always visible for now as requested */}
-          <RoleSwitcher />
+          {/* <RoleSwitcher /> */}
         </MaintenanceProvider>
       </body>
     </html>

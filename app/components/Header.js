@@ -10,6 +10,9 @@ export default function Header() {
 
   const handleLogout = () => {
     logout();
+    localStorage.removeItem('uid');
+    localStorage.removeItem('role');
+    localStorage.removeItem('uname');
     router.push('/');
   };
 
