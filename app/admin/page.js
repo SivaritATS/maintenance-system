@@ -163,6 +163,16 @@ function AdminContent() {
   };
   const handlingcanclerejected = async (ticket) => {
     try {
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_URL}/api/updatestatus/`,
+        {
+          id: ticket.fix_no,
+          status: "approved",
+          finish_date: null,
+          operator: null,
+        },
+      );
+      if (response.status === 200) {
         const response1 = await axios.put(
           `${process.env.NEXT_PUBLIC_URL}/api/updatejobcancle/`,
           {
@@ -187,7 +197,7 @@ function AdminContent() {
               text: `${ticket.fix_no} has been rejected -5 score`,
             });
           }
-        
+        }
       }
     } catch (error) {
       Swal.fire({
