@@ -146,6 +146,7 @@ export const MaintenanceProvider = ({ children }) => {
   return (
     <MaintenanceContext.Provider value={{ 
       currentUser, 
+      setCurrentUser,
       users,
       tickets, 
       login, 

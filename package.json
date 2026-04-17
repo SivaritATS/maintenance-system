@@ -9,11 +9,23 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
     "axios": "^1.15.0",
     "cryptojs": "^2.5.3",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "mssql": "^12.2.0",
-    "mysql2": "^3.19.1"
+    "mysql2": "^3.19.1",
+    "next": "^16.2.4",
+    "postcss": "^8.5.10",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "sweetalert2": "^11.26.24",
+    "sweetalert2-react-content": "^5.1.2",
+    "tailwindcss": "^4.2.2"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14",
+    "typescript": "6.0.3"
   }
 }

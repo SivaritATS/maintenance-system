@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useMaintenance } from "./context/MaintenanceContext";
 import Swal from "sweetalert2";
 import axios from "axios";
-import RoleSwitcher from "./components/RoleSwitcher_login";
 import { encrypt } from "@/encrypt";
 import { decrypt } from "@/encrypt";
 export default function LoginPage() {
@@ -31,109 +30,72 @@ export default function LoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    // const success = login(loginId, loginPwd);
-    const mode = localStorage.getItem("role");
-    if (!mode) {
-      setError("Please select a role before logging in.");
+
+    try {
+      // First, try to log in as an Operator (Admin or Technician)
+      const operatorRes = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/api/getoperator/byusername`,
+        { username: loginId }
+      );
+
+      if (operatorRes.status === 200 && operatorRes.data && operatorRes.data.length > 0) {
+        const data = operatorRes.data[0];
+        if (data.passwords === loginPwd) {
+          Swal.fire({
+            icon: "success",
+            title: "Welcome back!",
+            text: `Logged in as ${data.fnames}`,
+            timer: 1500,
+            showConfirmButton: false,
+          });
+          const encryptedId = encodeURIComponent(encrypt(data.operator_id.toString()));
+          if (data.roles === "technician") {
+            router.push(`/technician?id=${encryptedId}`);
+          } else if (data.roles === "admin") {
+            router.push(`/admin?id=${encryptedId}`);
+          }
+          return;
+        }
+      }
+
+      // If not found in operators or password mismatch, try Student (User)
+      const studentRes = await axios.post(
+        `${process.env.NEXT_PUBLIC_URL}/api/getstudent/byname`,
+        { fname: loginId }
+      );
+
+      if (studentRes.status === 200 && studentRes.data && studentRes.data.length > 0) {
+        const data = studentRes.data[0];
+        if (data.passwords === loginPwd) {
+          Swal.fire({
+            icon: "success",
+            title: "Welcome back!",
+            text: `Logged in as ${data.fnames}`,
+            timer: 1500,
+            showConfirmButton: false,
+          });
+          const encryptedId = encodeURIComponent(encrypt(data.student_id.toString()));
+          router.push(`/user?id=${encryptedId}`);
+          return;
+        }
+      }
+
+      // If neither worked
+      setError("Invalid ID or Password");
       Swal.fire({
-        icon: "warning",
-        title: "Role Not Selected",
-        text: "Please select a role before logging in.",
+        icon: "error",
+        title: "Login Failed",
+        text: "Invalid ID or Password. Please try again.",
       });
-      return;
+
+    } catch (error) {
+      setError("An error occurred during login. Please try again.");
+      Swal.fire({
+        icon: "error",
+        title: "Login Failed",
+        text: "An error occurred during login. Please try again.",
+      });
     }
-    if (mode === "admin" || mode === "tech") {
-      try {
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_URL}/api/getoperator/byusername`,
-          {
-            username: loginId,
-          },
-        );
-        if (response.status === 200) {
-          const data = response.data[0];
-          const password = data.passwords;
-          const role = data.roles;
-          if (password === loginPwd) {
-            Swal.fire({
-              icon: "success",
-              title: "Welcome back!",
-              text: `Logged in as ${data.fnames}`,
-              timer: 1500,
-              showConfirmButton: false,
-            });
-            if (role === "technician") {
-              const encryptedId = encodeURIComponent(encrypt(loginId));
-              router.push(`/technician?id=${encryptedId}`);
-            }
-            if (role === "admin") {
-              const encryptedId = encodeURIComponent(encrypt(loginId));
-              router.push(`/admin?id=${encryptedId}`);
-            }
-          } else {
-            setError("Invalid ID or Password");
-            Swal.fire({
-              icon: "error",
-              title: "Login Failed",
-              text: "Invalid ID or Password. Please try again.",
-            });
-          }
-        }
-      } catch (error) {
-        setError("An error occurred during login. Please try again.");
-        Swal.fire({
-          icon: "error",
-          title: "Login Failed",
-          text: "An error occurred during login. Please try again.",
-        });
-      }
-    } else if (mode === "user") {
-      try {
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_URL}/api/getstudent/byname`,
-          {
-            fname: loginId,
-          },
-        );
-        if (response.status === 200) {
-          const data = response.data[0];
-          const password = data.passwords;
-          if (password === loginPwd) {
-            Swal.fire({
-              icon: "success",
-              title: "Welcome back!",
-              text: `Logged in as ${data.fnames}`,
-              timer: 1500,
-              showConfirmButton: false,
-            });
-            const encryptedId = encodeURIComponent(encrypt(loginId));
-            router.push(`/user?id=${encryptedId}`);
-          } else {
-            setError("Invalid ID or Password");
-            Swal.fire({
-              icon: "error",
-              title: "Login Failed",
-              text: "Invalid ID or Password. Please try again.",
-            });
-          }
-        }
-      } catch (error) {
-        setError("An error occurred during login. Please try again.");
-        Swal.fire({
-          icon: "error",
-          title: "Login Failed",
-          text: "An error occurred during login. Please try again.",
-        });
-      }
-    }
-    // if (!success) {
-    //   setError('Invalid ID or Password');
-    //   Swal.fire({
-    //     icon: 'error',
-    //     title: 'Login Failed',
-    //     text: 'Invalid ID or Password. Please try again.',
-    //   });
-    // }
   };
 
   return (
@@ -177,12 +139,8 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="login-footer">
-            <p>Demo Credentials</p>
-          </div>
         </div>
       </div>
-      <RoleSwitcher />
     </div>
   );
 }

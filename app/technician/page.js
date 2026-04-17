@@ -8,7 +8,7 @@ import { decrypt } from "@/encrypt";
 import axios from "axios";
 
 function TechnicianPage() {
-  const { currentUser, tickets, updateTicketStatus, updateUserScore } =
+  const { currentUser, tickets, updateTicketStatus, updateUserScore, setCurrentUser } =
     useMaintenance();
   const router = useRouter();
   const [techTab, setTechTab] = useState("available");
@@ -40,11 +40,7 @@ function TechnicianPage() {
         );
         setFixData(response.data);
       } catch (error) {
-        Swal.fire({
-          icon: "error",
-          title: "Unable to Synchronize with database",
-          text: "Unauthorized to access this page.",
-        });
+        console.log(error);
       }
     };
 
@@ -56,9 +52,20 @@ function TechnicianPage() {
             id: decryptuser,
           },
         );
-        setOperatorInfo(response.data[0]);
-        getfixs();
-        getscore();
+        if (response.status === 200 && response.data && response.data.length > 0) {
+          const data = response.data[0];
+          setOperatorInfo(data);
+          setCurrentUser({
+            id: data.operator_id,
+            name: `${data.fnames} ${data.lnames}`,
+            role: "tech",
+            score: data.credit
+          });
+          getfixs();
+          getscore();
+        } else {
+          throw new Error("Invalid User");
+        }
       } catch (error) {
         Swal.fire({
           icon: "error",
@@ -80,15 +87,20 @@ function TechnicianPage() {
           setScoredata(response.data);
         }
       } catch (error) {
-        Swal.fire({
-          icon: "error",
-          title: "Unable to Synchronize with database",
-          text: "Unauthorized to access this page.",
-        });
+        console.log(error);
+        // Suppress Swal error here so it doesn't spam the user during polling
       }
     };
 
     validateUser();
+
+    // Set up polling for real-time updates every 5 seconds
+    const intervalId = setInterval(() => {
+      getfixs();
+      getscore();
+    }, 5000);
+
+    return () => clearInterval(intervalId);
   }, [decryptuser]);
 
   const handletakejob = async (ticket) => {
@@ -564,7 +576,7 @@ function TechnicianPage() {
                     <div className="ticket-grid">
                       {myCancelRequests.map((ticket) => (
                         <div
-                          key={ticket.id}
+                          key={ticket.fix_id}
                           className="ticket-card"
                           style={{
                             borderLeft: "4px solid var(--warning-500)",
@@ -573,7 +585,7 @@ function TechnicianPage() {
                         >
                           <div className="ticket-header">
                             <span className="ticket-id">
-                              Ticket #{ticket.id}
+                              Ticket #{ticket.fix_id}
                             </span>
                             <span className="status-badge status-cancellation_requested">
                               Awaiting
@@ -618,7 +630,7 @@ function TechnicianPage() {
               <div className="ticket-grid">
                 {myCompleted.map((ticket) => (
                   <div
-                    key={ticket.id}
+                    key={ticket.fix_id}
                     className={`ticket-card ${getCategoryClass(ticket.category)}`}
                     style={{ opacity: 0.9 }}
                   >

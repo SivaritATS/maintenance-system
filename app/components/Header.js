@@ -50,32 +50,7 @@ export default function Header() {
       </div>
 
       <div className="navbar-right">
-        <select
-          className="form-select"
-          style={{
-            width: 'auto',
-            padding: '0.4rem 0.8rem',
-            fontSize: '0.8rem',
-            marginRight: '1rem',
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            color: 'white',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-          onChange={(e) => handleSwitchUser(e.target.value)}
-          value={currentUser.id}
-        >
-          <optgroup label="Users" style={{ color: '#333' }}>
-            {users.filter(u => u.role === 'user').map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-          </optgroup>
-          <optgroup label="Admins" style={{ color: '#333' }}>
-            {users.filter(u => u.role === 'admin').map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-          </optgroup>
-          <optgroup label="Technicians" style={{ color: '#333' }}>
-            {users.filter(u => u.role === 'tech').map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-          </optgroup>
-        </select>
+
 
         {currentUser.score !== undefined && (
           <div className="navbar-score">

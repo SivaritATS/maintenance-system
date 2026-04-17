@@ -20,7 +20,7 @@ export default function Page() {
 }
 
 function UserPage() {
-  const { currentUser, tickets, createTicket } = useMaintenance();
+  const { currentUser, tickets, createTicket, setCurrentUser } = useMaintenance();
   const router = useRouter();
 
   const [decryptuser, setDecryptUser] = useState(null);
@@ -52,25 +52,41 @@ function UserPage() {
   useEffect(() => {
     if (!decryptuser) return;
     const validateuser = async () => {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_URL}/api/getstudent/byid`,
-        {
-          id: decryptuser,
-        },
-      );
-      if (response.status === 200) {
-        const data = response.data[0];
-        setName(data.fnames);
-        return;
-      } else {
+      try {
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_URL}/api/getstudent/byid`,
+          {
+            id: decryptuser,
+          },
+        );
+        if (response.status === 200 && response.data && response.data.length > 0) {
+          const data = response.data[0];
+          setName(data.fnames);
+          setCurrentUser({
+            id: data.student_id,
+            name: `${data.fnames} ${data.lnames}`,
+            role: "user"
+          });
+          return;
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Invalid User",
+            text: "The user ID is invalid. Please log in again.",
+          }).then(() => {
+            router.push("/");
+          });
+          return;
+        }
+      } catch (error) {
+        console.error("Validation error:", error);
         Swal.fire({
           icon: "error",
-          title: "Invalid User",
-          text: "The user ID is invalid. Please log in again.",
+          title: "Server Error",
+          text: "An error occurred while validating the user.",
         }).then(() => {
           router.push("/");
         });
-        return;
       }
     };
     const getdata = async () => {
@@ -88,6 +104,13 @@ function UserPage() {
     };
     validateuser();
     getdata();
+
+    // Set up polling for real-time updates every 5 seconds
+    const intervalId = setInterval(() => {
+      getdata();
+    }, 5000);
+
+    return () => clearInterval(intervalId);
   }, [decryptuser, router]);
 
   if (!decryptuser) return null;
@@ -312,7 +335,7 @@ function UserPage() {
               <div className="ticket-grid">
                 {data.map((ticket) => (
                   <div
-                    key={ticket.id}
+                    key={ticket.fix_id}
                     className={`ticket-card ${getCategoryClass(ticket.category)}`}
                   >
                     <div className="ticket-header">

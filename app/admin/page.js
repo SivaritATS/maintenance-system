@@ -11,7 +11,7 @@ import axios from "axios";
 const MySwal = withReactContent(Swal);
 
 function AdminContent() {
-  const { currentUser, tickets, updateTicketStatus, updateUserScore, users } =
+  const { currentUser, tickets, updateTicketStatus, updateUserScore, users, setCurrentUser } =
     useMaintenance();
   const router = useRouter();
   const [operatorinfo, setOperatorInfo] = useState([]);
@@ -35,6 +35,7 @@ function AdminContent() {
   }, [searchParams]);
 
   useEffect(() => {
+    if (!decryptuser) return;
     const validateUser = async () => {
       try {
         const response = await axios.post(
@@ -43,8 +44,17 @@ function AdminContent() {
             id: decryptuser,
           },
         );
-        if (response.status === 200) {
-          setOperatorInfo(response.data[0]);
+        if (response.status === 200 && response.data && response.data.length > 0) {
+          const data = response.data[0];
+          setOperatorInfo(data);
+          setCurrentUser({
+            id: data.operator_id,
+            name: `${data.fnames} ${data.lnames}`,
+            role: "admin",
+            score: data.credit
+          });
+        } else {
+          throw new Error("Invalid User");
         }
       } catch (error) {
         Swal.fire({
@@ -73,15 +83,20 @@ function AdminContent() {
           setJobcancle(data);
         }
       } catch (error) {
-        Swal.fire({
-          icon: "error",
-          title: "Unable to synchronize with database",
-          text: "Connectiom to database was losted.",
-        });
+        console.log(error);
+        // Suppress Swal error here so it doesn't spam the user during polling
       }
     };
+    
     validateUser();
     getinformation();
+
+    // Set up polling for real-time updates every 5 seconds
+    const intervalId = setInterval(() => {
+      getinformation();
+    }, 5000);
+
+    return () => clearInterval(intervalId);
   }, [decryptuser]);
 
   useEffect(() => {
