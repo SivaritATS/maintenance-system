@@ -8,8 +8,13 @@ import { decrypt } from "@/encrypt";
 import axios from "axios";
 
 function TechnicianPage() {
-  const { currentUser, tickets, updateTicketStatus, updateUserScore, setCurrentUser } =
-    useMaintenance();
+  const {
+    currentUser,
+    tickets,
+    updateTicketStatus,
+    updateUserScore,
+    setCurrentUser,
+  } = useMaintenance();
   const router = useRouter();
   const [techTab, setTechTab] = useState("available");
   const [decryptuser, setDecryptUser] = useState(null);
@@ -52,14 +57,18 @@ function TechnicianPage() {
             id: decryptuser,
           },
         );
-        if (response.status === 200 && response.data && response.data.length > 0) {
+        if (
+          response.status === 200 &&
+          response.data &&
+          response.data.length > 0
+        ) {
           const data = response.data[0];
           setOperatorInfo(data);
           setCurrentUser({
             id: data.operator_id,
             name: `${data.fnames} ${data.lnames}`,
             role: "tech",
-            score: data.credit
+            score: data.credit,
           });
           getfixs();
           getscore();
@@ -135,11 +144,8 @@ function TechnicianPage() {
       });
     }
   };
-  const calmyscore =
-    Array.isArray(scoredata) && scoredata.length > 0
-      ? scoredata.reduce((sum, item) => sum + item.earn, 0) / scoredata.length
-      : 0;
-
+  const calmyscore = operatorinfo.score ?? 0;
+  // console.log(calmyscore);
   const availableTickets = fixdata.filter((t) => t.fix_status === "approved");
   const myJobs = fixdata.filter(
     (t) => t.operator === Number(decryptuser) && t.fix_status === "inprogress",
@@ -258,13 +264,15 @@ function TechnicianPage() {
           `${process.env.NEXT_PUBLIC_URL}/api/addtrans`,
           { operator_id: decryptuser, credit_received: credit },
         );
-        const response5 = await axios.post(
+
+        const currentScore = Number(operatorinfo.score ?? 0);
+        const newScore = currentScore + 5;
+
+        const response5 = await axios.put(
           `${process.env.NEXT_PUBLIC_URL}/api/addscore`,
           {
-            operator: decryptuser,
-            detail: "completed task",
-            earn: 5,
-            fix_id: ticket.fix_id,
+            id: decryptuser,
+            score: newScore,
           },
         );
 

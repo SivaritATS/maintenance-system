@@ -11,8 +11,14 @@ import axios from "axios";
 const MySwal = withReactContent(Swal);
 
 function AdminContent() {
-  const { currentUser, tickets, updateTicketStatus, updateUserScore, users, setCurrentUser } =
-    useMaintenance();
+  const {
+    currentUser,
+    tickets,
+    updateTicketStatus,
+    updateUserScore,
+    users,
+    setCurrentUser,
+  } = useMaintenance();
   const router = useRouter();
   const [operatorinfo, setOperatorInfo] = useState([]);
   const [activeStatus, setActiveStatus] = useState("actionable");
@@ -44,14 +50,18 @@ function AdminContent() {
             id: decryptuser,
           },
         );
-        if (response.status === 200 && response.data && response.data.length > 0) {
+        if (
+          response.status === 200 &&
+          response.data &&
+          response.data.length > 0
+        ) {
           const data = response.data[0];
           setOperatorInfo(data);
           setCurrentUser({
             id: data.operator_id,
             name: `${data.fnames} ${data.lnames}`,
             role: "admin",
-            score: data.credit
+            score: data.credit,
           });
         } else {
           throw new Error("Invalid User");
@@ -87,7 +97,7 @@ function AdminContent() {
         // Suppress Swal error here so it doesn't spam the user during polling
       }
     };
-    
+
     validateUser();
     getinformation();
 
@@ -125,20 +135,16 @@ function AdminContent() {
 
   const getscore = async (id) => {
     const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_URL}/api/getscore`,
-      {
-        id: id,
-      },
+      `${process.env.NEXT_PUBLIC_URL}/api/getoperator`,
+      { id },
     );
-    if (response.status === 200) {
-      const data = response.data;
-      let total = 0;
-      data.forEach((item) => {
-        total += item.earn;
-      });
-      return data.length > 0 ? total / data.length : 0;
+
+    if (response.status === 200 && response.data.length > 0) {
+      const data = response.data[0]; 
+      return data.score ?? 0; 
     }
-    return null;
+
+    return 0;
   };
 
   const handlingcancleapprove = async (ticket) => {
@@ -177,6 +183,7 @@ function AdminContent() {
     }
   };
   const handlingcanclerejected = async (ticket) => {
+    // console.log(ticket.operator);
     try {
       const response = await axios.put(
         `${process.env.NEXT_PUBLIC_URL}/api/updatestatus/`,
@@ -197,20 +204,31 @@ function AdminContent() {
         );
         if (response1.status === 200) {
           const response2 = await axios.post(
-            `${process.env.NEXT_PUBLIC_URL}/api/addscore/`,
+            `${process.env.NEXT_PUBLIC_URL}/api/getoperator`,
             {
-              operator: ticket.operator,
-              detail: "Bad reason",
-              earn: -5,
-              fix_id: ticket.fix_no,
+              id: ticket.operator,
             },
           );
+          const datascore = response2.data[0];
+          const techscore = Number(datascore.score);
+
+          const deductscore = techscore - 5;
+          console.log(deductscore);
           if (response2.status === 200) {
-            Swal.fire({
-              icon: "success",
-              title: `rejected for ticket no: ${ticket.fix_no} -5 score`,
-              text: `${ticket.fix_no} has been rejected -5 score`,
-            });
+            const response3 = await axios.put(
+              `${process.env.NEXT_PUBLIC_URL}/api/addscore/`,
+              {
+                id: ticket.operator,
+                score: deductscore,
+              },
+            );
+            if (response3.status === 200) {
+              Swal.fire({
+                icon: "success",
+                title: `rejected for ticket no: ${ticket.fix_no} -5 score`,
+                text: `${ticket.fix_no} has been rejected -5 score`,
+              });
+            }
           }
         }
       }

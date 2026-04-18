@@ -1,15 +1,15 @@
 import { pool } from "@/server";
 
-export async function POST(req) {
+export async function PUT(req) {
   try {
-    const { operator, detail, earn, fix_id } = await req.json();
+    const { id, score } = await req.json();
 
-    await pool.query(
-      `INSERT INTO score(operator,detail,earn,fix_id) VALUES (?,?,?,?)`,
-      [operator, detail, earn, fix_id],
-    );
+    await pool.query(`UPDATE operators SET score = ? WHERE operator_id=?`, [
+      score,
+      id,
+    ]);
 
-    return Response.json({ message: "Insert success" });
+    return Response.json({ message: "update success" });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
