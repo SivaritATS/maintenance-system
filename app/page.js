@@ -99,18 +99,24 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-box">
-        <div className="login-card animate-in">
-          <div className="login-logo">UF</div>
-          <h1 className="login-title">UniFix</h1>
-          <p className="login-subtitle">University Maintenance Portal</p>
+    <div className="min-h-screen flex items-center justify-center bg-base-200">
+      <div className="card w-96 bg-base-100 shadow-xl border border-base-300">
+        <div className="card-body">
+          <div className="flex flex-col items-center mb-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center font-bold text-white text-3xl shadow-lg mb-4">
+              UF
+            </div>
+            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">UniFix</h1>
+            <p className="text-sm text-base-content/60 font-medium tracking-wide uppercase mt-1">Maintenance Portal</p>
+          </div>
 
-          <form onSubmit={handleLogin}>
-            <div className="form-group">
-              <label className="form-label">User ID</label>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text font-semibold">User ID</span>
+              </label>
               <input
-                className="form-input"
+                className="input input-bordered w-full focus:input-primary"
                 type="text"
                 value={loginId}
                 onChange={(e) => setLoginId(e.target.value)}
@@ -118,10 +124,12 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <div className="form-group">
-              <label className="form-label">Password</label>
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text font-semibold">Password</span>
+              </label>
               <input
-                className="form-input"
+                className="input input-bordered w-full focus:input-primary"
                 type="password"
                 value={loginPwd}
                 onChange={(e) => setLoginPwd(e.target.value)}
@@ -129,16 +137,21 @@ export default function LoginPage() {
                 required
               />
             </div>
-            {error && <div className="login-error">{error}</div>}
+
+            {error && (
+              <div className="alert alert-error text-sm p-3 rounded-lg shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>{error}</span>
+              </div>
+            )}
+
             <button
               type="submit"
-              className="btn btn-primary btn-full"
-              style={{ padding: "0.75rem" }}
+              className="btn btn-primary w-full shadow-lg shadow-primary/30 mt-4"
             >
               Sign In
             </button>
           </form>
-
         </div>
       </div>
     </div>

@@ -24,14 +24,15 @@ function TechnicianPage() {
   const [scoredata, setScoredata] = useState([]);
 
   useEffect(() => {
-    const encryptedId = searchParams.get("id");
+    const encryptedId = searchParams.get("id") || localStorage.getItem("eid");
     if (!encryptedId) {
       router.push("/");
       return;
     }
-    const loginId = encryptedId
-      ? decrypt(decodeURIComponent(encryptedId))
-      : null;
+    if (searchParams.get("id") && searchParams.get("id") !== localStorage.getItem("eid")) {
+      localStorage.setItem("eid", searchParams.get("id"));
+    }
+    const loginId = decrypt(decodeURIComponent(encryptedId));
     setDecryptUser(loginId);
   }, [searchParams]);
 
@@ -113,6 +114,15 @@ function TechnicianPage() {
   }, [decryptuser]);
 
   const handletakejob = async (ticket) => {
+    if ((operatorinfo?.score || 0) < 30) {
+      Swal.fire({
+        icon: "error",
+        title: "Score Too Low",
+        text: "Your score is below 30. You cannot accept new jobs this month.",
+      });
+      return;
+    }
+    
     try {
       const ticketid = ticket.fix_id;
       const response = await axios.put(
@@ -175,6 +185,16 @@ function TechnicianPage() {
   const getCategoryClass = (cat) => {
     if (cat.includes("Public")) return "cat-Public";
     return `cat-${cat}`;
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("th-TH", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
   };
 
   const handleCompleteJob = async (ticket) => {
@@ -339,124 +359,135 @@ function TechnicianPage() {
   return (
     <>
       <Header />
-      <div className="container animate-in">
-        <div className="stats-row">
-          <div
-            className="stat-card"
-            onClick={() => setTechTab("available")}
-            style={{
-              cursor: "pointer",
-              borderColor: techTab === "available" ? "var(--info-500)" : "",
-              borderWidth: techTab === "available" ? "2px" : "",
-            }}
-          >
-            <div className="stat-icon blue">📋</div>
-            <div>
-              <div className="stat-value">{availableTickets.length}</div>
-              <div className="stat-label">Available</div>
-            </div>
+      <div className="container mx-auto p-4 md:p-8 animate-in mt-6">
+        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-base-content">Technician Dashboard</h1>
+            <p className="text-base-content/60 mt-1">Find new tasks and manage your active jobs</p>
           </div>
-          <div
-            className="stat-card"
-            onClick={() => setTechTab("my-jobs")}
-            style={{
-              cursor: "pointer",
-              borderColor: techTab === "my-jobs" ? "var(--primary-500)" : "",
-              borderWidth: techTab === "my-jobs" ? "2px" : "",
-            }}
-          >
-            <div className="stat-icon purple">🔧</div>
-            <div>
-              <div className="stat-value">{myJobs.length}</div>
-              <div className="stat-label">Active Jobs</div>
-            </div>
-          </div>
-          <div
-            className="stat-card"
-            onClick={() => setTechTab("completed")}
-            style={{
-              cursor: "pointer",
-              borderColor: techTab === "completed" ? "var(--success-500)" : "",
-              borderWidth: techTab === "completed" ? "2px" : "",
-            }}
-          >
-            <div className="stat-icon green">✅</div>
-            <div>
-              <div className="stat-value">{myCompleted.length}</div>
-              <div className="stat-label">Completed</div>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon amber">★</div>
-            <div>
-              <div className="stat-value">{calmyscore}</div>
-              <div className="stat-label">Score</div>
-            </div>
+          <div className="badge badge-primary badge-lg p-4 font-bold shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+            Technician
           </div>
         </div>
 
-        <div className="tabs">
-          <div
-            className={`tab ${techTab === "available" ? "active" : ""}`}
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div 
+            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${techTab === "available" ? "border-info" : "border-base-200"}`}
             onClick={() => setTechTab("available")}
           >
-            Available ({availableTickets.length})
+            <div className="stat-figure text-info">
+              <svg xmlns="http://www.w3.org/2000/svg" className="inline-block w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+            </div>
+            <div className="stat-title font-semibold text-base-content/60">Available</div>
+            <div className="stat-value text-info">{availableTickets.length}</div>
           </div>
-          <div
-            className={`tab ${techTab === "my-jobs" ? "active" : ""}`}
+
+          <div 
+            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${techTab === "my-jobs" ? "border-primary" : "border-base-200"}`}
             onClick={() => setTechTab("my-jobs")}
           >
-            My Jobs ({myJobs.length})
+            <div className="stat-figure text-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" className="inline-block w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
+            </div>
+            <div className="stat-title font-semibold text-base-content/60">Active Jobs</div>
+            <div className="stat-value text-primary">{myJobs.length}</div>
           </div>
-          <div
-            className={`tab ${techTab === "completed" ? "active" : ""}`}
+
+          <div 
+            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${techTab === "completed" ? "border-success" : "border-base-200"}`}
             onClick={() => setTechTab("completed")}
           >
-            Completed ({myCompleted.length})
+            <div className="stat-figure text-success">
+              <svg xmlns="http://www.w3.org/2000/svg" className="inline-block w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+            <div className="stat-title font-semibold text-base-content/60">Completed</div>
+            <div className="stat-value text-success">{myCompleted.length}</div>
           </div>
+
+          <div className="stat bg-base-100 rounded-2xl shadow-sm border-2 border-base-200">
+            <div className="stat-figure text-warning">
+              <svg xmlns="http://www.w3.org/2000/svg" className="inline-block w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </div>
+            <div className="stat-title font-semibold text-base-content/60">Score</div>
+            <div className="stat-value text-warning">{calmyscore}</div>
+          </div>
+        </div>
+
+        <div className="tabs tabs-boxed bg-base-200 p-2 w-max mb-6">
+          <button
+            className={`tab tab-lg font-bold ${techTab === "available" ? "tab-active bg-base-100 text-primary shadow-sm" : ""}`}
+            onClick={() => setTechTab("available")}
+          >
+            Available <span className="badge badge-sm ml-2 bg-base-200">{availableTickets.length}</span>
+          </button>
+          <button
+            className={`tab tab-lg font-bold ${techTab === "my-jobs" ? "tab-active bg-base-100 text-primary shadow-sm" : ""}`}
+            onClick={() => setTechTab("my-jobs")}
+          >
+            My Jobs <span className="badge badge-sm ml-2 bg-base-200">{myJobs.length}</span>
+          </button>
+          <button
+            className={`tab tab-lg font-bold ${techTab === "completed" ? "tab-active bg-base-100 text-primary shadow-sm" : ""}`}
+            onClick={() => setTechTab("completed")}
+          >
+            Completed <span className="badge badge-sm ml-2 bg-base-200">{myCompleted.length}</span>
+          </button>
         </div>
 
         {techTab === "available" && (
-          <div>
-            <div className="section-header">
-              <h2 className="section-title">Recommended for You</h2>
+          <div className="animate-in fade-in">
+            <div className="flex justify-between items-end mb-6 border-b border-base-200 pb-4">
+              <h2 className="text-2xl font-bold text-base-content">Recommended for You</h2>
             </div>
+            
             {recommended.length === 0 ? (
-              <div className="card" style={{ marginBottom: "2rem" }}>
-                <div className="empty-state">
-                  <div className="empty-state-icon">🔍</div>
-                  <div className="empty-state-title">
-                    No tasks for your specialty
-                  </div>
-                  <div className="empty-state-desc">
-                    Check "Other Tasks" below for available work.
-                  </div>
+              <div className="card bg-base-100 shadow-sm border border-base-200 py-12 mb-8">
+                <div className="flex flex-col items-center justify-center text-center">
+                  <div className="text-5xl mb-4 opacity-50">🔍</div>
+                  <h3 className="text-xl font-bold mb-2 text-base-content">No tasks for your specialty</h3>
+                  <p className="text-base-content/60 max-w-sm">Check "Other Tasks" below for available work outside your primary category.</p>
                 </div>
               </div>
             ) : (
-              <div className="ticket-grid" style={{ marginBottom: "2rem" }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
                 {recommended.map((ticket) => (
-                  <div
-                    key={ticket.fix_id}
-                    className={`ticket-card ${getCategoryClass(ticket.category)}`}
-                  >
-                    <div className="ticket-header">
-                      <span className="ticket-id">Ticket #{ticket.fix_id}</span>
-                      <span className="status-badge status-approved">
-                        Available
-                      </span>
+                  <div key={ticket.fix_id} className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow">
+                    <div className="card-body p-5">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Ticket #{ticket.fix_id}</div>
+                        <div className="badge badge-info font-semibold gap-1 py-3 px-3 shadow-sm">Available</div>
+                      </div>
+                      
+                      {ticket.approved_by && (
+                        <div className="text-xs text-primary font-semibold mb-2">
+                          Approved by: {ticket.approved_by}
+                        </div>
+                      )}
+
+                      <h3 className="card-title text-lg font-bold mt-1 mb-3 text-base-content line-clamp-1">{ticket.fix_name}</h3>
+                      
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        <span className="badge badge-outline text-xs">{ticket.category}</span>
+                        {ticket.fixs_location && (
+                          <span className="text-xs text-base-content/60 flex items-center">
+                            📍 {ticket.fixs_location}
+                          </span>
+                        )}
+                        <span className="text-xs text-base-content/60 flex items-center">
+                          📅 {formatDate(ticket.report_date)}
+                        </span>
+                      </div>
+
+                      <div className="bg-base-200/50 p-3 rounded-lg text-sm text-base-content/80 line-clamp-2 min-h-[3.5rem] mb-4">
+                        {ticket.fix_detail}
+                      </div>
+                      
+                      <button onClick={() => handletakejob(ticket)} className="btn btn-primary w-full mt-auto">
+                        Take Job
+                      </button>
                     </div>
-                    <div className="ticket-title">{ticket.fix_name}</div>
-                    <div className="ticket-meta">
-                      <span>{ticket.category}</span>
-                    </div>
-                    <div className="ticket-desc">{ticket.fix_detail}</div>
-                    <button
-                      onClick={() => handletakejob(ticket)}
-                      className="btn btn-primary btn-full"
-                    >
-                      Take Job
-                    </button>
                   </div>
                 ))}
               </div>
@@ -464,39 +495,49 @@ function TechnicianPage() {
 
             {others.length > 0 && (
               <>
-                <hr className="divider" />
-                <div className="section-header">
-                  <h2 className="section-title">Other Available Tasks</h2>
-                  <span className="section-subtitle">
-                    {others.length} tasks
-                  </span>
+                <div className="divider mb-6"></div>
+                <div className="flex justify-between items-end mb-6 border-b border-base-200 pb-4">
+                  <h2 className="text-xl font-bold text-base-content">Other Available Tasks</h2>
+                  <div className="text-sm text-base-content/60">{others.length} tasks</div>
                 </div>
-                <div className="ticket-grid">
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {others.map((ticket) => (
-                    <div
-                      key={ticket.fix_id}
-                      className={`ticket-card ${getCategoryClass(ticket.category)}`}
-                      style={{ opacity: 0.85 }}
-                    >
-                      <div className="ticket-header">
-                        <span className="ticket-id">
-                          Ticket #{ticket.fix_id}
-                        </span>
-                        <span className="status-badge status-approved">
-                          Available
-                        </span>
+                    <div key={ticket.fix_id} className="card bg-base-100 shadow-sm border border-base-200 opacity-90 hover:opacity-100 hover:shadow-md transition-all">
+                      <div className="card-body p-5">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Ticket #{ticket.fix_id}</div>
+                          <div className="badge badge-info font-semibold gap-1 py-3 px-3 shadow-sm">Available</div>
+                        </div>
+                        
+                        {ticket.approved_by && (
+                          <div className="text-xs text-primary font-semibold mb-2">
+                            Approved by: {ticket.approved_by}
+                          </div>
+                        )}
+
+                        <h3 className="card-title text-lg font-bold mt-1 mb-3 text-base-content line-clamp-1">{ticket.fix_name}</h3>
+                        
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <span className="badge badge-outline text-xs">{ticket.category}</span>
+                          {ticket.fixs_location && (
+                            <span className="text-xs text-base-content/60 flex items-center">
+                              📍 {ticket.fixs_location}
+                            </span>
+                          )}
+                          <span className="text-xs text-base-content/60 flex items-center">
+                            📅 {formatDate(ticket.report_date)}
+                          </span>
+                        </div>
+
+                        <div className="bg-base-200/50 p-3 rounded-lg text-sm text-base-content/80 line-clamp-2 min-h-[3.5rem] mb-4">
+                          {ticket.fix_detail}
+                        </div>
+                        
+                        <button onClick={() => handletakejob(ticket)} className="btn btn-secondary btn-outline w-full mt-auto">
+                          Take Job (Cross-Role)
+                        </button>
                       </div>
-                      <div className="ticket-title">{ticket.fix_name}</div>
-                      <div className="ticket-meta">
-                        <span>{ticket.category}</span>
-                      </div>
-                      <div className="ticket-desc">{ticket.fix_detail}</div>
-                      <button
-                        onClick={() => handletakejob(ticket)}
-                        className="btn btn-secondary btn-full"
-                      >
-                        Take Job (Cross-Role)
-                      </button>
                     </div>
                   ))}
                 </div>
@@ -506,65 +547,64 @@ function TechnicianPage() {
         )}
 
         {techTab === "my-jobs" && (
-          <div>
-            <div className="section-header">
-              <h2 className="section-title">Tasks in Progress</h2>
-              <span className="section-subtitle">{myJobs.length} active</span>
+          <div className="animate-in fade-in">
+            <div className="flex justify-between items-end mb-6 border-b border-base-200 pb-4">
+              <h2 className="text-2xl font-bold text-base-content">Tasks in Progress</h2>
+              <div className="text-sm text-base-content/60">{myJobs.length} active</div>
             </div>
 
             {myJobs.length === 0 && myCancelRequests.length === 0 ? (
-              <div className="card">
-                <div className="empty-state">
-                  <div className="empty-state-icon">📭</div>
-                  <div className="empty-state-title">No active jobs</div>
-                  <div className="empty-state-desc">
-                    Go to "Available" tab to pick up work.
-                  </div>
+              <div className="card bg-base-100 shadow-sm border border-base-200 py-16">
+                <div className="flex flex-col items-center justify-center text-center">
+                  <div className="text-6xl mb-4 opacity-50">📭</div>
+                  <h3 className="text-xl font-bold mb-2 text-base-content">No active jobs</h3>
+                  <p className="text-base-content/60 max-w-sm">Go to the "Available" tab to pick up new work.</p>
                 </div>
               </div>
             ) : (
               <>
-                <div className="ticket-grid" style={{ marginBottom: "2rem" }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
                   {myJobs.map((ticket) => (
-                    <div
-                      key={ticket.fix_id}
-                      className={`ticket-card ${getCategoryClass(ticket.category)}`}
-                      style={{ borderLeft: "4px solid var(--primary-500)" }}
-                    >
-                      <div className="ticket-header">
-                        <span className="ticket-id">
-                          Ticket #{ticket.fix_id}
-                        </span>
-                        <span className="status-badge status-approved">
-                          Working
-                        </span>
-                      </div>
-                      <div className="ticket-title">{ticket.fix_name}</div>
-                      <div className="ticket-meta">
-                        <span>{ticket.category}</span>
-                      </div>
-                      <div className="ticket-desc">{ticket.fix_detail}</div>
-                      <div
-                        className="ticket-actions"
-                        style={{ flexDirection: "column" }}
-                      >
-                        <button
-                          onClick={() => handleCompleteJob(ticket)}
-                          className="btn btn-success btn-full"
-                        >
-                          ✓ Mark as Completed
-                        </button>
-                        <button
-                          onClick={() => handleCancelJob(ticket)}
-                          className="btn btn-ghost btn-full"
-                          style={{
-                            color: "var(--danger-500)",
-                            fontSize: "0.8rem",
-                            marginTop: "0.25rem",
-                          }}
-                        >
-                          Request Cancellation
-                        </button>
+                    <div key={ticket.fix_id} className="card bg-base-100 shadow-md border-t-4 border-t-primary border-x border-b border-base-200 hover:shadow-lg transition-shadow">
+                      <div className="card-body p-5 flex flex-col h-full">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Ticket #{ticket.fix_id}</div>
+                          <div className="badge badge-primary font-semibold gap-1 py-3 px-3 shadow-sm">Working</div>
+                        </div>
+                        
+                        {ticket.approved_by && (
+                          <div className="text-xs text-primary font-semibold mb-2">
+                            Approved by: {ticket.approved_by}
+                          </div>
+                        )}
+
+                        <h3 className="card-title text-lg font-bold mt-1 mb-3 text-base-content">{ticket.fix_name}</h3>
+                        
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <span className="badge badge-outline text-xs">{ticket.category}</span>
+                          {ticket.fixs_location && (
+                            <span className="text-xs text-base-content/60 flex items-center">
+                              📍 {ticket.fixs_location}
+                            </span>
+                          )}
+                          <span className="text-xs text-base-content/60 flex items-center">
+                            📅 {formatDate(ticket.report_date)}
+                          </span>
+                        </div>
+
+                        <div className="bg-base-200/50 p-3 rounded-lg text-sm text-base-content/80 min-h-[3.5rem] mb-6 flex-grow">
+                          {ticket.fix_detail}
+                        </div>
+                        
+                        <div className="flex flex-col gap-2 mt-auto">
+                          <button onClick={() => handleCompleteJob(ticket)} className="btn btn-success text-white w-full shadow-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                            Mark as Completed
+                          </button>
+                          <button onClick={() => handleCancelJob(ticket)} className="btn btn-ghost btn-sm text-error/70 hover:text-error hover:bg-error/10 w-full">
+                            Request Cancellation
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -572,38 +612,27 @@ function TechnicianPage() {
 
                 {myCancelRequests.length > 0 && (
                   <>
-                    <hr className="divider" />
-                    <div className="section-header">
-                      <h2
-                        className="section-title"
-                        style={{ color: "var(--warning-600)" }}
-                      >
-                        ⏳ Pending Cancellation
-                      </h2>
+                    <div className="divider mb-6"></div>
+                    <div className="flex items-center gap-2 mb-6 border-b border-base-200 pb-4">
+                      <h2 className="text-xl font-bold text-warning">⏳ Pending Cancellation</h2>
                     </div>
-                    <div className="ticket-grid">
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {myCancelRequests.map((ticket) => (
-                        <div
-                          key={ticket.fix_id}
-                          className="ticket-card"
-                          style={{
-                            borderLeft: "4px solid var(--warning-500)",
-                            opacity: 0.7,
-                          }}
-                        >
-                          <div className="ticket-header">
-                            <span className="ticket-id">
-                              Ticket #{ticket.fix_id}
-                            </span>
-                            <span className="status-badge status-cancellation_requested">
-                              Awaiting
-                            </span>
-                          </div>
-                          <div className="ticket-title">{ticket.title}</div>
-                          <div className="reason-box">
-                            <div className="reason-box-label">Your Reason</div>
-                            <div className="reason-box-text">
-                              {ticket.cancellationReason}
+                        <div key={ticket.fix_id} className="card bg-base-100 shadow-sm border-t-4 border-t-warning border-x border-b border-base-200 opacity-80">
+                          <div className="card-body p-5">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Ticket #{ticket.fix_id}</div>
+                              <div className="badge badge-warning font-semibold gap-1 py-3 px-3 shadow-sm">Awaiting Review</div>
+                            </div>
+                            
+                            <h3 className="card-title text-lg font-bold mt-1 mb-4 text-base-content">{ticket.title || ticket.fix_name}</h3>
+                            
+                            <div className="bg-warning/10 border border-warning/20 p-4 rounded-lg">
+                              <div className="text-xs font-bold text-warning/80 uppercase tracking-wider mb-1">Your Reason</div>
+                              <div className="text-sm font-medium text-base-content/80">
+                                {ticket.cancellationReason || "No reason provided."}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -617,44 +646,54 @@ function TechnicianPage() {
         )}
 
         {techTab === "completed" && (
-          <div>
-            <div className="section-header">
-              <h2 className="section-title">Completed Jobs</h2>
-              <span className="section-subtitle">
-                {myCompleted.length} total
-              </span>
+          <div className="animate-in fade-in">
+            <div className="flex justify-between items-end mb-6 border-b border-base-200 pb-4">
+              <h2 className="text-2xl font-bold text-base-content">Completed Jobs</h2>
+              <div className="text-sm text-base-content/60">{myCompleted.length} total</div>
             </div>
+            
             {myCompleted.length === 0 ? (
-              <div className="card">
-                <div className="empty-state">
-                  <div className="empty-state-icon">✅</div>
-                  <div className="empty-state-title">No completed jobs yet</div>
-                  <div className="empty-state-desc">
-                    Complete your first job to see it here.
-                  </div>
+              <div className="card bg-base-100 shadow-sm border border-base-200 py-16">
+                <div className="flex flex-col items-center justify-center text-center">
+                  <div className="text-6xl mb-4 opacity-50">✅</div>
+                  <h3 className="text-xl font-bold mb-2 text-base-content">No completed jobs yet</h3>
+                  <p className="text-base-content/60 max-w-sm">Complete your first job to see it here.</p>
                 </div>
               </div>
             ) : (
-              <div className="ticket-grid">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {myCompleted.map((ticket) => (
-                  <div
-                    key={ticket.fix_id}
-                    className={`ticket-card ${getCategoryClass(ticket.category)}`}
-                    style={{ opacity: 0.9 }}
-                  >
-                    <div className="ticket-header">
-                      <span className="ticket-id">Ticket #{ticket.fix_id}</span>
-                      <span className="status-badge status-completed">
-                        Completed
-                      </span>
+                  <div key={ticket.fix_id} className="card bg-base-100 shadow-sm border-t-4 border-t-success border-x border-b border-base-200 opacity-90">
+                    <div className="card-body p-5">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Ticket #{ticket.fix_id}</div>
+                        <div className="badge badge-success font-semibold gap-1 py-3 px-3 shadow-sm text-white">Completed</div>
+                      </div>
+                      
+                      {ticket.approved_by && (
+                        <div className="text-xs text-primary font-semibold mb-2">
+                          Approved by: {ticket.approved_by}
+                        </div>
+                      )}
+
+                      <h3 className="card-title text-lg font-bold mt-1 mb-3 text-base-content line-clamp-1">{ticket.fix_name}</h3>
+                      
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        <span className="badge badge-outline text-xs">{ticket.category}</span>
+                        {ticket.fixs_location && (
+                          <span className="text-xs text-base-content/60 flex items-center">
+                            📍 {ticket.fixs_location}
+                          </span>
+                        )}
+                        <span className="text-xs text-base-content/60 flex items-center">
+                          📅 {formatDate(ticket.report_date)}
+                        </span>
+                      </div>
+
+                      <div className="bg-base-200/50 p-3 rounded-lg text-sm text-base-content/80 line-clamp-3">
+                        {ticket.fix_detail}
+                      </div>
                     </div>
-                    <div className="ticket-title">{ticket.fix_name}</div>
-                    <div className="ticket-meta">
-                      <span>{ticket.category}</span>
-                      <span className="dot"></span>
-                      <span>{ticket.report_date}</span>
-                    </div>
-                    <div className="ticket-desc">{ticket.fix_detail}</div>
                   </div>
                 ))}
               </div>

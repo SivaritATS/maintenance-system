@@ -32,8 +32,8 @@ export default function RoleSwitcher() {
       border: '1px solid rgba(255,255,255,0.1)'
     }}>
       <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.7rem', marginRight: '0.3rem', fontWeight: 500 }}>DEV</span>
-      <button 
-        onClick={() => handleSwitch('user')} 
+      <button
+        onClick={() => handleSwitch('user')}
         style={{
           background: 'linear-gradient(135deg, #6366f1, #818cf8)',
           color: 'white', border: 'none', padding: '0.35rem 0.75rem',
@@ -43,8 +43,8 @@ export default function RoleSwitcher() {
       >
         👤 User
       </button>
-      <button 
-        onClick={() => handleSwitch('admin')} 
+      <button
+        onClick={() => handleSwitch('admin')}
         style={{
           background: 'linear-gradient(135deg, #ec4899, #f472b6)',
           color: 'white', border: 'none', padding: '0.35rem 0.75rem',
@@ -54,8 +54,8 @@ export default function RoleSwitcher() {
       >
         🛡 Admin
       </button>
-      <button 
-        onClick={() => handleSwitch('tech')} 
+      <button
+        onClick={() => handleSwitch('tech')}
         style={{
           background: 'linear-gradient(135deg, #10b981, #34d399)',
           color: 'white', border: 'none', padding: '0.35rem 0.75rem',

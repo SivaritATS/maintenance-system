@@ -25,4 +25,4 @@ export const INITIAL_TICKETS = [
   { id: 4, title: 'Broken Chair', description: 'Chair leg matches broken in Room 101.', category: 'Classroom', reporterId: 'user1', status: 'pending', createdAt: '2023-10-27' },
 ];
 
-export const CATEGORIES = ['IT', 'Public Area', 'Classroom', 'Restroom', 'General', 'Other'];
+export const CATEGORIES = ['IT', 'Public Area', 'Classroom', 'Restroom', 'General'];
