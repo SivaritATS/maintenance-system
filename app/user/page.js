@@ -199,8 +199,8 @@ function UserPage() {
       <div className="container mx-auto p-4 md:p-8 animate-in mt-6">
         <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-base-content">Dashboard</h1>
-            <p className="text-base-content/60 mt-1">Manage your maintenance reports and requests</p>
+            <h1 className="text-3xl font-bold tracking-tight text-base-content">หน้าแจ้งซ่อม</h1>
+            <p className="text-base-content/60 mt-1">แจ้งปัญหาของคุณที่พบในมหาวิทยาลัย</p>
           </div>
           <div className="badge badge-primary badge-lg p-4 font-bold shadow-sm">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -266,7 +266,7 @@ function UserPage() {
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="form-control w-full">
-                    <label className="label"><span className="label-text font-medium">Issue Title</span></label>
+                    <label className="label"><span className="label-text font-medium">เรื่องที่แจ้ง</span></label>
                     <input
                       className="input input-bordered w-full focus:input-primary"
                       value={newTicket.title}
@@ -277,7 +277,7 @@ function UserPage() {
                   </div>
 
                   <div className="form-control w-full">
-                    <label className="label"><span className="label-text font-medium">Category</span></label>
+                    <label className="label"><span className="label-text font-medium">หมวดหมู่</span></label>
                     <select
                       className="select select-bordered w-full focus:select-primary"
                       value={newTicket.category}
@@ -290,7 +290,7 @@ function UserPage() {
                   </div>
 
                   <div className="form-control w-full">
-                    <label className="label"><span className="label-text font-medium">Location</span></label>
+                    <label className="label"><span className="label-text font-medium">สถานที่</span></label>
                     <input
                       className="input input-bordered w-full focus:input-primary"
                       value={newTicket.location}
@@ -301,7 +301,7 @@ function UserPage() {
                   </div>
 
                   <div className="form-control w-full">
-                    <label className="label"><span className="label-text font-medium">Description</span></label>
+                    <label className="label"><span className="label-text font-medium">รายละเอียด</span></label>
                     <textarea
                       className="textarea textarea-bordered h-24 focus:textarea-primary"
                       value={newTicket.description}
@@ -368,6 +368,11 @@ function UserPage() {
                         
                         <div className="flex flex-wrap gap-2 mb-4">
                           <span className="badge badge-outline text-xs">{ticket.category}</span>
+                          {ticket.fix_location && (
+                            <span className="text-xs text-base-content/60 flex items-center">
+                              📍 {ticket.fix_location}
+                            </span>
+                          )}
                           <span className="text-xs text-base-content/60 flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                             {formatDate(ticket.report_date)}

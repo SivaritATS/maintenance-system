@@ -70,6 +70,7 @@ function TechnicianPage() {
             name: `${data.fnames} ${data.lnames}`,
             role: "tech",
             score: data.credit,
+            category: data.category,
           });
           getfixs();
           getscore();
@@ -365,9 +366,16 @@ function TechnicianPage() {
             <h1 className="text-3xl font-bold tracking-tight text-base-content">Technician Dashboard</h1>
             <p className="text-base-content/60 mt-1">Find new tasks and manage your active jobs</p>
           </div>
-          <div className="badge badge-primary badge-lg p-4 font-bold shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-            Technician
+          <div className="flex flex-col items-end gap-2">
+            <div className="badge badge-primary badge-lg p-4 font-bold shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+              Technician
+            </div>
+            {operatorinfo.category && (
+              <div className="badge badge-outline badge-md font-semibold px-3 py-3 border-primary/30 text-primary">
+                Specialty: {operatorinfo.category}
+              </div>
+            )}
           </div>
         </div>
 
@@ -470,9 +478,9 @@ function TechnicianPage() {
                       
                       <div className="flex flex-wrap gap-2 mb-4">
                         <span className="badge badge-outline text-xs">{ticket.category}</span>
-                        {ticket.fixs_location && (
+                        {ticket.fix_location && (
                           <span className="text-xs text-base-content/60 flex items-center">
-                            📍 {ticket.fixs_location}
+                            📍 {ticket.fix_location}
                           </span>
                         )}
                         <span className="text-xs text-base-content/60 flex items-center">
@@ -520,9 +528,9 @@ function TechnicianPage() {
                         
                         <div className="flex flex-wrap gap-2 mb-4">
                           <span className="badge badge-outline text-xs">{ticket.category}</span>
-                          {ticket.fixs_location && (
+                          {ticket.fix_location && (
                             <span className="text-xs text-base-content/60 flex items-center">
-                              📍 {ticket.fixs_location}
+                              📍 {ticket.fix_location}
                             </span>
                           )}
                           <span className="text-xs text-base-content/60 flex items-center">
@@ -582,9 +590,9 @@ function TechnicianPage() {
                         
                         <div className="flex flex-wrap gap-2 mb-4">
                           <span className="badge badge-outline text-xs">{ticket.category}</span>
-                          {ticket.fixs_location && (
+                          {ticket.fix_location && (
                             <span className="text-xs text-base-content/60 flex items-center">
-                              📍 {ticket.fixs_location}
+                              📍 {ticket.fix_location}
                             </span>
                           )}
                           <span className="text-xs text-base-content/60 flex items-center">
@@ -680,9 +688,9 @@ function TechnicianPage() {
                       
                       <div className="flex flex-wrap gap-2 mb-4">
                         <span className="badge badge-outline text-xs">{ticket.category}</span>
-                        {ticket.fixs_location && (
+                        {ticket.fix_location && (
                           <span className="text-xs text-base-content/60 flex items-center">
-                            📍 {ticket.fixs_location}
+                            📍 {ticket.fix_location}
                           </span>
                         )}
                         <span className="text-xs text-base-content/60 flex items-center">

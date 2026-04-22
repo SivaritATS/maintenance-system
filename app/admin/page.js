@@ -442,9 +442,9 @@ function AdminContent() {
                           
                           <div className="flex flex-wrap gap-2 mb-4">
                             <span className="badge badge-outline text-xs">{ticket.category}</span>
-                            {ticket.fixs_location && (
+                            {ticket.fix_location && (
                               <span className="text-xs text-base-content/60 flex items-center">
-                                📍 {ticket.fixs_location}
+                                📍 {ticket.fix_location}
                               </span>
                             )}
                             <span className="text-xs text-base-content/60 flex items-center">
@@ -619,9 +619,9 @@ function AdminContent() {
                         
                         <div className="flex flex-wrap gap-2 mb-4">
                           <span className="badge badge-outline text-xs">{ticket.category}</span>
-                          {ticket.fixs_location && (
+                          {ticket.fix_location && (
                             <span className="text-xs text-base-content/60 flex items-center">
-                              📍 {ticket.fixs_location}
+                              📍 {ticket.fix_location}
                             </span>
                           )}
                           <span className="text-xs text-base-content/60 flex items-center">
