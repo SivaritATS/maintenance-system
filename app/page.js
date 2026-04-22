@@ -99,8 +99,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-base-200">
-      <div className="card w-96 bg-base-100 shadow-xl border border-base-300">
+    <div className="min-h-screen flex items-center justify-center" style={{background: 'linear-gradient(135deg, oklch(var(--p)/0.12) 0%, oklch(var(--b2)) 50%, oklch(var(--s)/0.10) 100%)'}}>
+      <div className="card w-96 bg-base-100 shadow-2xl border border-base-300">
         <div className="card-body">
           <div className="flex flex-col items-center mb-6">
             <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center font-bold text-white text-3xl shadow-lg mb-4">

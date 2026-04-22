@@ -81,7 +81,12 @@ export default function Header() {
       `}} />
 
       {/* Top Navbar */}
-      <div className="navbar bg-base-100 shadow-md sticky top-0 z-[60]">
+      <div 
+        className={`navbar shadow-sm fixed top-0 right-0 z-[60] transition-all duration-300
+          ${isOpen ? 'lg:left-72 lg:w-[calc(100%-288px)]' : 'left-0 w-full'}
+        `}
+        style={{ backgroundColor: 'oklch(var(--b1))' }}
+      >
         <div className="flex-none">
           <button 
             onClick={() => setIsOpen(!isOpen)}
@@ -127,7 +132,7 @@ export default function Header() {
 
       {/* Fixed Sidebar */}
       <div 
-        className={`fixed top-0 left-0 h-full bg-base-100 shadow-2xl z-[55] sidebar-transition overflow-hidden
+        className={`fixed top-0 left-0 h-full bg-base-100 shadow-2xl border-r border-[#d1d5db] z-[55] sidebar-transition overflow-hidden
           ${isOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full lg:w-0 lg:translate-x-0'}
         `}
       >

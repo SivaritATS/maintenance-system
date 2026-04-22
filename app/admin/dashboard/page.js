@@ -71,18 +71,20 @@ function DashboardContent() {
   return (
     <>
       <Header />
-      <div className="container mx-auto p-4 md:p-8 animate-in mt-6">
-        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="min-h-screen bg-base-200 pt-20">
+      <div className="container mx-auto p-4 md:p-8 animate-in">
+        {/* Page Hero */}
+        <div className="page-hero flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-base-content">Technician Performance</h1>
             <p className="text-base-content/60 mt-1">Status and performance metrics for all technicians</p>
           </div>
           <div className="badge badge-primary badge-lg p-4 font-bold shadow-sm">
-             Status tecnic
+             Status Technician
           </div>
         </div>
         
-        <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
+        <div className="content-section overflow-hidden">
           <div className="overflow-x-auto">
             <table className="table w-full">
               <thead>
@@ -137,6 +139,7 @@ function DashboardContent() {
                 Back to Admin Page
             </button>
         </div>
+      </div>
       </div>
     </>
   );

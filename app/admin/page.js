@@ -348,8 +348,10 @@ function AdminContent() {
   return (
     <>
       <Header />
-      <div className="container mx-auto p-4 md:p-8 animate-in mt-6">
-        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="min-h-screen bg-base-200 pt-20">
+      <div className="container mx-auto p-4 md:p-8 animate-in">
+        {/* Page Hero */}
+        <div className="page-hero flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-base-content">Admin Dashboard</h1>
             <p className="text-base-content/60 mt-1">Review pending requests and manage technicians</p>
@@ -361,9 +363,9 @@ function AdminContent() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="content-section grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
           <div 
-            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${activeStatus === "actionable" ? "border-warning" : "border-base-200"}`}
+            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${activeStatus === "actionable" ? "active-warning" : "border-base-200"}`}
             onClick={() => setActiveStatus("actionable")}
           >
             <div className="stat-figure text-warning">
@@ -374,7 +376,7 @@ function AdminContent() {
           </div>
 
           <div 
-            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${activeStatus === "actionable" ? "border-error" : "border-base-200"}`}
+            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${activeStatus === "actionable" ? "active-error" : "border-base-200"}`}
             onClick={() => setActiveStatus("actionable")}
           >
             <div className="stat-figure text-error">
@@ -385,7 +387,7 @@ function AdminContent() {
           </div>
 
           <div 
-            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${activeStatus === "approved" ? "border-info" : "border-base-200"}`}
+            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${activeStatus === "approved" ? "active-info" : "border-base-200"}`}
             onClick={() => setActiveStatus("approved")}
           >
             <div className="stat-figure text-info">
@@ -396,7 +398,7 @@ function AdminContent() {
           </div>
 
           <div 
-            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${activeStatus === "completed" ? "border-success" : "border-base-200"}`}
+            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${activeStatus === "completed" ? "active-success" : "border-base-200"}`}
             onClick={() => setActiveStatus("completed")}
           >
             <div className="stat-figure text-success">
@@ -409,7 +411,7 @@ function AdminContent() {
         </div>
 
         {activeStatus === "actionable" ? (
-          <div className="animate-in fade-in">
+          <div className="content-section animate-in fade-in">
             {/* Pending Section */}
             <div className="flex justify-between items-end mb-6 border-b border-base-200 pb-4">
               <h2 className="text-2xl font-bold text-base-content">Pending Review</h2>
@@ -429,7 +431,7 @@ function AdminContent() {
                 {pendingTickets.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
                     {pendingTickets.map((ticket) => (
-                      <div key={ticket.fix_id} className="card bg-base-100 shadow-sm border-t-4 border-t-warning border-x border-b border-base-200 hover:shadow-md transition-shadow">
+                      <div key={ticket.fix_id} className="card bg-base-100 shadow-sm border-status-warning hover:shadow-md transition-shadow">
                         <div className="card-body p-5">
                           <div className="flex justify-between items-start mb-4">
                             <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">
@@ -487,7 +489,7 @@ function AdminContent() {
                     const techScore = scoreMap[ticket.operator] ?? "?";
 
                     return (
-                      <div key={ticket.fix_no} className="card bg-base-100 shadow-md border-t-4 border-t-error border-x border-b border-base-200">
+                      <div key={ticket.fix_no} className="card bg-base-100 shadow-md border-status-error">
                         <div className="card-body p-5">
                           <div className="flex justify-between items-start mb-2">
                             <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">#{ticket.fix_no}</div>
@@ -523,7 +525,7 @@ function AdminContent() {
             )}
           </div>
         ) : activeStatus === "performance" ? (
-          <div className="animate-in fade-in">
+          <div className="content-section animate-in fade-in">
             <div className="flex justify-between items-end mb-6 border-b border-base-200 pb-4">
               <h2 className="text-2xl font-bold text-base-content">Technician Performance Dashboard</h2>
             </div>
@@ -573,7 +575,7 @@ function AdminContent() {
             </div>
           </div>
         ) : (
-          <div className="animate-in fade-in">
+          <div className="content-section animate-in fade-in">
             <div className="flex justify-between items-end mb-6 border-b border-base-200 pb-4">
               <h2 className="text-2xl font-bold text-base-content">
                 {activeStatus === "approved" ? "In Progress" : "Completed Jobs"}
@@ -593,14 +595,15 @@ function AdminContent() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredList.map((ticket) => {
                   let statusColor = "badge-neutral";
+                  let borderClass = "";
                   const statusRaw = ticket.fix_status === "approved" || ticket.fix_status === "inprogress" ? "In Progress" : ticket.fix_status;
                   
-                  if (statusRaw === "Pending") statusColor = "badge-warning";
-                  if (statusRaw === "In Progress") statusColor = "badge-info";
-                  if (statusRaw === "Completed" || statusRaw === "completed") statusColor = "badge-success";
+                  if (statusRaw === "Pending") { statusColor = "badge-warning"; borderClass = "border-status-warning"; }
+                  if (statusRaw === "In Progress") { statusColor = "badge-info"; borderClass = "border-status-info"; }
+                  if (statusRaw === "Completed" || statusRaw === "completed") { statusColor = "badge-success"; borderClass = "border-status-success"; }
                   
                   return (
-                    <div key={ticket.fix_id} className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow">
+                    <div key={ticket.fix_id} className={`card bg-base-100 shadow-sm ${borderClass} hover:shadow-md transition-shadow`}>
                       <div className="card-body p-5">
                         <div className="flex justify-between items-start mb-2">
                           <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">#{ticket.fix_id}</div>
@@ -643,6 +646,7 @@ function AdminContent() {
             )}
           </div>
         )}
+      </div>
       </div>
     </>
   );

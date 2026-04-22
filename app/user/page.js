@@ -196,8 +196,10 @@ function UserPage() {
   return (
     <>
       <Header />
-      <div className="container mx-auto p-4 md:p-8 animate-in mt-6">
-        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="min-h-screen bg-base-200 pt-20">
+      <div className="container mx-auto p-4 md:p-8 animate-in">
+        {/* Page Hero */}
+        <div className="page-hero flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-base-content">หน้าแจ้งซ่อม</h1>
             <p className="text-base-content/60 mt-1">แจ้งปัญหาของคุณที่พบในมหาวิทยาลัย</p>
@@ -209,9 +211,9 @@ function UserPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="content-section grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
           <div 
-            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${activeStatus === "all" ? "border-primary" : "border-base-200"}`}
+            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${activeStatus === "all" ? "active-info" : "border-base-200"}`}
             onClick={() => setActiveStatus("all")}
           >
             <div className="stat-figure text-primary">
@@ -222,7 +224,7 @@ function UserPage() {
           </div>
           
           <div 
-            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${activeStatus === "pending" ? "border-warning" : "border-base-200"}`}
+            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${activeStatus === "pending" ? "active-warning" : "border-base-200"}`}
             onClick={() => setActiveStatus("pending")}
           >
             <div className="stat-figure text-warning">
@@ -233,7 +235,7 @@ function UserPage() {
           </div>
 
           <div 
-            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${activeStatus === "in_progress" ? "border-info" : "border-base-200"}`}
+            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${activeStatus === "in_progress" ? "active-info" : "border-base-200"}`}
             onClick={() => setActiveStatus("in_progress")}
           >
             <div className="stat-figure text-info">
@@ -244,7 +246,7 @@ function UserPage() {
           </div>
 
           <div 
-            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${activeStatus === "completed" ? "border-success" : "border-base-200"}`}
+            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${activeStatus === "completed" ? "active-success" : "border-base-200"}`}
             onClick={() => setActiveStatus("completed")}
           >
             <div className="stat-figure text-success">
@@ -321,7 +323,7 @@ function UserPage() {
           </div>
 
           <div className="lg:col-span-2">
-            <div className="flex justify-between items-end mb-6 border-b border-base-200 pb-4">
+            <div className="section-header">
               <div>
                 <h2 className="text-2xl font-bold text-base-content">My Reports</h2>
                 <div className="text-sm text-base-content/60 mt-1">Showing {filteredTickets.length} reports</div>
@@ -390,6 +392,7 @@ function UserPage() {
             )}
           </div>
         </div>
+      </div>
       </div>
     </>
   );

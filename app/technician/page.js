@@ -360,8 +360,10 @@ function TechnicianPage() {
   return (
     <>
       <Header />
-      <div className="container mx-auto p-4 md:p-8 animate-in mt-6">
-        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="min-h-screen bg-base-200 pt-20">
+      <div className="container mx-auto p-4 md:p-8 animate-in">
+        {/* Page Hero */}
+        <div className="page-hero flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-base-content">Technician Dashboard</h1>
             <p className="text-base-content/60 mt-1">Find new tasks and manage your active jobs</p>
@@ -380,9 +382,9 @@ function TechnicianPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="content-section grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
           <div 
-            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${techTab === "available" ? "border-info" : "border-base-200"}`}
+            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${techTab === "available" ? "active-info" : "border-base-200"}`}
             onClick={() => setTechTab("available")}
           >
             <div className="stat-figure text-info">
@@ -393,7 +395,7 @@ function TechnicianPage() {
           </div>
 
           <div 
-            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${techTab === "my-jobs" ? "border-primary" : "border-base-200"}`}
+            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${techTab === "my-jobs" ? "active-primary" : "border-base-200"}`}
             onClick={() => setTechTab("my-jobs")}
           >
             <div className="stat-figure text-primary">
@@ -404,7 +406,7 @@ function TechnicianPage() {
           </div>
 
           <div 
-            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${techTab === "completed" ? "border-success" : "border-base-200"}`}
+            className={`stat bg-base-100 rounded-2xl shadow-sm border-2 cursor-pointer transition-all hover:-translate-y-1 ${techTab === "completed" ? "active-success" : "border-base-200"}`}
             onClick={() => setTechTab("completed")}
           >
             <div className="stat-figure text-success">
@@ -414,7 +416,7 @@ function TechnicianPage() {
             <div className="stat-value text-success">{myCompleted.length}</div>
           </div>
 
-          <div className="stat bg-base-100 rounded-2xl shadow-sm border-2 border-base-200">
+          <div className="stat bg-base-100 rounded-2xl shadow-sm border-2 border-status-warning">
             <div className="stat-figure text-warning">
               <svg xmlns="http://www.w3.org/2000/svg" className="inline-block w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             </div>
@@ -446,7 +448,7 @@ function TechnicianPage() {
 
         {techTab === "available" && (
           <div className="animate-in fade-in">
-            <div className="flex justify-between items-end mb-6 border-b border-base-200 pb-4">
+            <div className="section-header">
               <h2 className="text-2xl font-bold text-base-content">Recommended for You</h2>
             </div>
             
@@ -461,7 +463,7 @@ function TechnicianPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
                 {recommended.map((ticket) => (
-                  <div key={ticket.fix_id} className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow">
+                  <div key={ticket.fix_id} className="card bg-base-100 shadow-sm border-status-info hover:shadow-md transition-shadow">
                     <div className="card-body p-5">
                       <div className="flex justify-between items-start mb-2">
                         <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Ticket #{ticket.fix_id}</div>
@@ -511,7 +513,7 @@ function TechnicianPage() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {others.map((ticket) => (
-                    <div key={ticket.fix_id} className="card bg-base-100 shadow-sm border border-base-200 opacity-90 hover:opacity-100 hover:shadow-md transition-all">
+                    <div key={ticket.fix_id} className="card bg-base-100 shadow-sm border-status-info opacity-90 hover:opacity-100 hover:shadow-md transition-all">
                       <div className="card-body p-5">
                         <div className="flex justify-between items-start mb-2">
                           <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Ticket #{ticket.fix_id}</div>
@@ -573,7 +575,7 @@ function TechnicianPage() {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
                   {myJobs.map((ticket) => (
-                    <div key={ticket.fix_id} className="card bg-base-100 shadow-md border-t-4 border-t-primary border-x border-b border-base-200 hover:shadow-lg transition-shadow">
+                    <div key={ticket.fix_id} className="card bg-base-100 shadow-md border-status-primary hover:shadow-lg transition-shadow">
                       <div className="card-body p-5 flex flex-col h-full">
                         <div className="flex justify-between items-start mb-2">
                           <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Ticket #{ticket.fix_id}</div>
@@ -627,7 +629,7 @@ function TechnicianPage() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {myCancelRequests.map((ticket) => (
-                        <div key={ticket.fix_id} className="card bg-base-100 shadow-sm border-t-4 border-t-warning border-x border-b border-base-200 opacity-80">
+                        <div key={ticket.fix_id} className="card bg-base-100 shadow-sm border-status-warning opacity-80">
                           <div className="card-body p-5">
                             <div className="flex justify-between items-start mb-2">
                               <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Ticket #{ticket.fix_id}</div>
@@ -671,7 +673,7 @@ function TechnicianPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {myCompleted.map((ticket) => (
-                  <div key={ticket.fix_id} className="card bg-base-100 shadow-sm border-t-4 border-t-success border-x border-b border-base-200 opacity-90">
+                  <div key={ticket.fix_id} className="card bg-base-100 shadow-sm border-status-success opacity-90">
                     <div className="card-body p-5">
                       <div className="flex justify-between items-start mb-2">
                         <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Ticket #{ticket.fix_id}</div>
@@ -708,6 +710,7 @@ function TechnicianPage() {
             )}
           </div>
         )}
+      </div>
       </div>
     </>
   );
