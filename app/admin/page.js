@@ -113,10 +113,10 @@ function AdminContent() {
     validateUser();
     getinformation();
 
-    // Set up polling for real-time updates every 5 seconds
+    // Set up polling for real-time updates every 2 seconds
     const intervalId = setInterval(() => {
       getinformation();
-    }, 5000);
+    }, 2000);
 
     return () => clearInterval(intervalId);
   }, [decryptuser]);
@@ -161,6 +161,14 @@ function AdminContent() {
 
   const handlingcancleapprove = async (ticket) => {
     try {
+      Swal.fire({
+        title: "Processing...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
       const response = await axios.put(
         `${process.env.NEXT_PUBLIC_URL}/api/updatestatus/`,
         {
@@ -183,6 +191,8 @@ function AdminContent() {
             icon: "success",
             title: `Approved cancellation for ${ticket.operator_name ?? "Technician"}`,
             text: `Ticket #${ticket.fix_no} has been approved for cancellation.`,
+            timer: 2000,
+            showConfirmButton: false,
           });
         }
       }
@@ -195,8 +205,15 @@ function AdminContent() {
     }
   };
   const handlingcanclerejected = async (ticket) => {
-    // console.log(ticket.operator);
     try {
+      Swal.fire({
+        title: "Processing...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
       const response = await axios.put(
         `${process.env.NEXT_PUBLIC_URL}/api/updatestatus/`,
         {
@@ -225,7 +242,6 @@ function AdminContent() {
           const techscore = Number(datascore.score);
 
           const deductscore = techscore - 5;
-          console.log(deductscore);
           if (response2.status === 200) {
             const response3 = await axios.put(
               `${process.env.NEXT_PUBLIC_URL}/api/addscore/`,
@@ -239,6 +255,8 @@ function AdminContent() {
                 icon: "success",
                 title: `Rejected cancellation for ${ticket.operator_name ?? "Technician"}`,
                 text: `Ticket #${ticket.fix_no} has been rejected ( -5 score)`,
+                timer: 2000,
+                showConfirmButton: false,
               });
             }
           }

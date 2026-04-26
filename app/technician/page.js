@@ -105,11 +105,11 @@ function TechnicianPage() {
 
     validateUser();
 
-    // Set up polling for real-time updates every 5 seconds
+    // Set up polling for real-time updates every 2 seconds
     const intervalId = setInterval(() => {
       getfixs();
       getscore();
-    }, 5000);
+    }, 2000);
 
     return () => clearInterval(intervalId);
   }, [decryptuser]);
@@ -323,16 +323,33 @@ function TechnicianPage() {
       title: "⚠️ Request Cancellation",
       input: "textarea",
       inputLabel: "Reason for cancellation",
-      inputPlaceholder: "Why are you cancelling this  job?",
+      inputPlaceholder: "Why are you cancelling this job?",
       inputAttributes: { "aria-label": "Type your reason here" },
       showCancelButton: true,
       confirmButtonColor: "#ef4444",
       confirmButtonText: "Submit Request",
       cancelButtonText: "Go Back",
+      allowOutsideClick: () => !Swal.isLoading(),
+      preConfirm: (value) => {
+        if (!value || value.trim() === "") {
+          Swal.showValidationMessage("Please provide a reason for cancellation");
+          return false;
+        }
+        return value;
+      },
     });
 
     if (reason) {
       try {
+        Swal.fire({
+          title: "Sending Request...",
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          },
+        });
+
+        // 1. Add to job cancellation table
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_URL}/api/jobcancle`,
           {
@@ -342,7 +359,17 @@ function TechnicianPage() {
             status: "pending",
           },
         );
-        if (response.status === 200) {
+
+        // 2. Update status in fixs table to prevent duplicate requests
+        const responseStatus = await axios.put(
+          `${process.env.NEXT_PUBLIC_URL}/api/updatestatus/updatebyid`,
+          {
+            id: ticket.fix_id,
+            status: "cancellation_requested",
+          },
+        );
+
+        if (response.status === 200 && responseStatus.status === 200) {
           Swal.fire({
             icon: "info",
             title: "Request Sent",
@@ -353,6 +380,11 @@ function TechnicianPage() {
         }
       } catch (error) {
         console.log(error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to send cancellation request. Please try again.",
+        });
       }
     }
   };
